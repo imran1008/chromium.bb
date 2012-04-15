@@ -33,21 +33,23 @@
 
 TestShellRequestContext::TestShellRequestContext()
     : ALLOW_THIS_IN_INITIALIZER_LIST(storage_(this)) {
-  Init(FilePath(), net::HttpCache::NORMAL, false);
+  Init(FilePath(), net::HttpCache::NORMAL, false, NULL);
 }
 
 TestShellRequestContext::TestShellRequestContext(
     const FilePath& cache_path,
     net::HttpCache::Mode cache_mode,
-    bool no_proxy)
+    bool no_proxy,
+    net::ProxyConfigService* proxy_config_service_to_own)
     : ALLOW_THIS_IN_INITIALIZER_LIST(storage_(this)) {
-  Init(cache_path, cache_mode, no_proxy);
+  Init(cache_path, cache_mode, no_proxy, proxy_config_service_to_own);
 }
 
 void TestShellRequestContext::Init(
     const FilePath& cache_path,
     net::HttpCache::Mode cache_mode,
-    bool no_proxy) {
+    bool no_proxy,
+    net::ProxyConfigService* proxy_config_service_to_own) {
   storage_.set_cookie_store(new net::CookieMonster(NULL, NULL));
   storage_.set_origin_bound_cert_service(new net::OriginBoundCertService(
       new net::DefaultOriginBoundCertStore(NULL)));
@@ -56,6 +58,8 @@ void TestShellRequestContext::Init(
   set_accept_language("en-us,en");
   set_accept_charset("iso-8859-1,*,utf-8");
 
+  scoped_ptr<net::ProxyConfigService> proxy_config_service(
+      proxy_config_service_to_own);
 #if defined(OS_POSIX) && !defined(OS_MACOSX)
   // Use no proxy to avoid ProxyConfigServiceLinux.
   // Enabling use of the ProxyConfigServiceLinux requires:
@@ -65,13 +69,16 @@ void TestShellRequestContext::Init(
   //  non-functional on linux in this context because of v8 threading
   //  issues.
   // TODO(port): rename "linux" to some nonspecific unix.
-  scoped_ptr<net::ProxyConfigService> proxy_config_service(
-      new net::ProxyConfigServiceFixed(net::ProxyConfig()));
+  if (!proxy_config_service.get()) {
+      proxy_config_service.reset(new net::ProxyConfigServiceFixed(net::ProxyConfig()));
+  }
 #else
   // Use the system proxy settings.
-  scoped_ptr<net::ProxyConfigService> proxy_config_service(
-      net::ProxyService::CreateSystemProxyConfigService(
-          MessageLoop::current(), NULL));
+  if (!proxy_config_service.get()) {
+      proxy_config_service.reset(
+          net::ProxyService::CreateSystemProxyConfigService(
+              MessageLoop::current(), NULL));
+  }
 #endif
   storage_.set_host_resolver(
       net::CreateSystemHostResolver(net::HostResolver::kDefaultParallelism,

@@ -13,6 +13,10 @@
 class FilePath;
 class GURL;
 
+namespace net {
+class ProxyConfigService;
+}
+
 class SimpleResourceLoaderBridge {
  public:
   // Call this function to initialize the simple resource loader bridge.
@@ -23,7 +27,8 @@ class SimpleResourceLoaderBridge {
   //
   static void Init(const FilePath& cache_path,
                    net::HttpCache::Mode cache_mode,
-                   bool no_proxy);
+                   bool no_proxy,
+                   net::ProxyConfigService* proxy_config_service_ptr);
 
   // Call this function to shutdown the simple resource loader bridge.
   static void Shutdown();
