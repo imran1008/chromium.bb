@@ -489,7 +489,7 @@ LayoutPoint shezGetOffset(const RenderBoxModelObject* _this)
                 curr = curr->parent();
             }
             if (offsetPar->isBox() && offsetPar->isBody() && !offsetPar->isRelPositioned() && !offsetPar->isPositioned()) {
-                referencePoint.moveBy(toRenderBox(curr)->topLeftLocation());
+                referencePoint.moveBy(toRenderBox(offsetPar)->topLeftLocation());
 
                 LayoutSize currentOffset;
                 offsetPar->parent()->adjustForColumns(currentOffset, referencePoint);
