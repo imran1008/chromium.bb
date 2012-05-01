@@ -849,7 +849,7 @@ void ReplaceSelectionCommand::doApply()
     Element* currentRoot = selection.rootEditableElement();
 
     if ((selectionStartWasStartOfParagraph && selectionEndWasEndOfParagraph && !startIsInsideMailBlockquote) ||
-        startBlock == currentRoot || isListItem(startBlock) || selectionIsPlainText)
+        startBlock == currentRoot || isListItem(startBlock) || isTableCell(startBlock) || selectionIsPlainText)
         m_preventNesting = false;
     
     if (selection.isRange()) {
