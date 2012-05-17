@@ -212,8 +212,9 @@ void ApplyBlockElementCommand::rangeForParagraphSplittingTextNodesIfNeeded(const
 
     if (RenderStyle* endStyle = renderStyleOfEnclosingTextNode(end)) {
         bool isEndAndEndOfLastParagraphOnSameNode = renderStyleOfEnclosingTextNode(m_endOfLastParagraph) && end.deprecatedNode() == m_endOfLastParagraph.deprecatedNode();
+        bool nextNodeIsText = end.deprecatedNode()->nextSibling() && end.deprecatedNode()->nextSibling()->isTextNode();
         // Include \n at the end of line if we're at an empty paragraph
-        if (endStyle->preserveNewline() && start == end && end.offsetInContainerNode() < end.containerNode()->maxCharacterOffset()) {
+        if (endStyle->preserveNewline() && start == end && end.offsetInContainerNode() < end.containerNode()->maxCharacterOffset() && nextNodeIsText) {
             int endOffset = end.offsetInContainerNode();
             if (!isNewLineAtPosition(end.previous()) && isNewLineAtPosition(end))
                 end = Position(end.containerText(), endOffset + 1);
