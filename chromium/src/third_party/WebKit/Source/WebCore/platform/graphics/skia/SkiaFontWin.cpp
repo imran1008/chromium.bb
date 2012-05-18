@@ -158,9 +158,9 @@ static bool disableTextLCD(PlatformContextSkia* skiaContext)
 // Lookup the current system settings for font smoothing.
 // We cache these values for performance, but if the browser has away to be
 // notified when these change, we could re-query them at that time.
+static bool gInited = false;
 static uint32_t getDefaultGDITextFlags()
 {
-    static bool gInited;
     static uint32_t gFlags;
     if (!gInited) {
         BOOL enabled;
@@ -310,6 +310,11 @@ void paintSkiaText(GraphicsContext* context,
     SkAutoUnref aur(face);
 
     paintSkiaText(context, hfont, face, size, quality, numGlyphs, glyphs, advances, offsets, origin);
+}
+
+void resetCachedGDISettings()
+{
+    gInited = false;
 }
 
 }  // namespace WebCore

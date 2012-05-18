@@ -92,6 +92,8 @@ void paintSkiaText(GraphicsContext*,
                    const GOFFSET* offsets,
                    const SkPoint* origin);
 
+void resetCachedGDISettings();
+
 }  // namespace WebCore
 
 #endif  // SkiaFontWin_h
