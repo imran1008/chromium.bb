@@ -51,7 +51,7 @@ public:
         DontClearImageBuffer
     };
 
-    void drawSVGToImageBuffer(ImageBuffer*, const IntSize&, float zoom, ShouldClearBuffer);
+    void drawSVGToImageBuffer(ImageBuffer*, const IntSize&, float zoom, float scale, ShouldClearBuffer);
     RenderBox* embeddedContentBox() const;
 
     virtual bool isSVGImage() const { return true; }
