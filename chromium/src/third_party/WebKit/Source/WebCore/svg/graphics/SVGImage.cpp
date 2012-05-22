@@ -154,7 +154,7 @@ IntSize SVGImage::size() const
     return IntSize(300, 150);
 }
 
-void SVGImage::drawSVGToImageBuffer(ImageBuffer* buffer, const IntSize& size, float zoom, float scale, ShouldClearBuffer shouldClear)
+void SVGImage::drawSVGToImageBuffer(ImageBuffer* buffer, const IntSize& size, float zoom, const FloatSize& scale, ShouldClearBuffer shouldClear)
 {
     // FIXME: This doesn't work correctly with animations. If an image contains animations, that say run for 2 seconds,
     // and we currently have one <img> that displays us. If we open another document referencing the same SVGImage it
@@ -192,7 +192,7 @@ void SVGImage::drawSVGToImageBuffer(ImageBuffer* buffer, const IntSize& size, fl
         buffer->context()->clearRect(rect);
 
     FloatRect scaledRect(rect);
-    scaledRect.scale(scale);
+    scaledRect.scale(scale.width(), scale.height());
 
     // Draw SVG on top of ImageBuffer.
     draw(buffer->context(), enclosingIntRect(scaledRect), rect, ColorSpaceDeviceRGB, CompositeSourceOver);

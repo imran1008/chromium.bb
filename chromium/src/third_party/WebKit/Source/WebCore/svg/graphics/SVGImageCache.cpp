@@ -116,7 +116,7 @@ Image* SVGImageCache::lookupOrCreateBitmapImageForRenderer(const RenderObject* r
 
     IntSize size = sizeIt->second.size;
     float zoom = sizeIt->second.zoom;
-    float scale = sizeIt->second.scale;
+    FloatSize scale = sizeIt->second.scale;
     ASSERT(!size.isEmpty());
 
     // Lookup image for renderer in cache and eventually update it.
@@ -134,7 +134,7 @@ Image* SVGImageCache::lookupOrCreateBitmapImageForRenderer(const RenderObject* r
     }
 
     FloatSize scaledSize(size);
-    scaledSize.scale(scale);
+    scaledSize.scale(scale.width(), scale.height());
 
     // Create and cache new image and image buffer at requested size.
     OwnPtr<ImageBuffer> newBuffer = ImageBuffer::create(expandedIntSize(scaledSize), 1);
