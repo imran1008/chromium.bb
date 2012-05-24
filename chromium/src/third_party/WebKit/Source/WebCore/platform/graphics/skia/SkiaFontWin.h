@@ -92,7 +92,8 @@ void paintSkiaText(GraphicsContext*,
                    const GOFFSET* offsets,
                    const SkPoint* origin);
 
-void resetCachedGDISettings();
+void resetSkiaFontFlags();
+void setSkiaFontFlags(bool antialias, bool lcdRender);
 
 }  // namespace WebCore
 
