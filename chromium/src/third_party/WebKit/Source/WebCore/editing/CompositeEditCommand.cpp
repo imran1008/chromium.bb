@@ -996,13 +996,22 @@ void CompositeEditCommand::cloneParagraphUnderNewElement(Position& start, Positi
         // point accordingly.
         while (!end.deprecatedNode()->isDescendantOf(outerNode.get())) {
             outerNode = outerNode->parentNode();
-            topNode = topNode->parentNode();
+            topNode = topNode->parentNode();   // SHEZ: this is not really necessary
+        }
+
+        // SHEZ: If the next sibling's parent != start's parent, then we need
+        // SHEZ: to move lastNode (our insertion point) up accordingly.
+        // SHEZ: Note that the upstream comment before the previous while loop
+        // SHEZ: is misleading.  All that does is increase the scope of the traversal.
+        if (Node* n = start.deprecatedNode()->traverseNextSibling(outerNode.get())) {
+            Node* s = start.deprecatedNode();
+            while (s->parentNode() && lastNode->parentNode() && s->parentNode() != n->parentNode()) {
+                s = s->parentNode();
+                lastNode = lastNode->parentNode();
+            }
         }
 
         for (Node* n = start.deprecatedNode()->traverseNextSibling(outerNode.get()); n; n = n->traverseNextSibling(outerNode.get())) {
-            if (n->parentNode() != start.deprecatedNode()->parentNode())
-                lastNode = topNode->lastChild();
-
             RefPtr<Node> clonedNode = n->cloneNode(true);
             insertNodeAfter(clonedNode, lastNode);
             lastNode = clonedNode.release();
