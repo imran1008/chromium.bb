@@ -957,17 +957,14 @@ void CompositeEditCommand::pushAnchorElementDown(Node* anchorNode)
 void CompositeEditCommand::cloneParagraphUnderNewElement(Position& start, Position& end, Node* passedOuterNode, Element* blockElement)
 {
     // First we clone the outerNode
-    RefPtr<Node> topNode;
     RefPtr<Node> lastNode;
     RefPtr<Node> outerNode = passedOuterNode;
 
     if (outerNode == outerNode->rootEditableElement()) {
-        topNode = blockElement;
         lastNode = blockElement;
     } else {
-        topNode = outerNode->cloneNode(isTableElement(outerNode.get()));
-        appendNode(topNode, blockElement);
-        lastNode = topNode;
+        lastNode = outerNode->cloneNode(isTableElement(outerNode.get()));
+        appendNode(lastNode, blockElement);
     }
 
     if (start.deprecatedNode() != outerNode && lastNode->isElementNode()) {
@@ -992,26 +989,23 @@ void CompositeEditCommand::cloneParagraphUnderNewElement(Position& start, Positi
     
     if (start.deprecatedNode() != end.deprecatedNode() && !start.deprecatedNode()->isDescendantOf(end.deprecatedNode())) {
         // If end is not a descendant of outerNode we need to
-        // find the first common ancestor and adjust the insertion
-        // point accordingly.
+        // find the first common ancestor to increase the scope
+        // of our nextSibling traversal.
         while (!end.deprecatedNode()->isDescendantOf(outerNode.get())) {
             outerNode = outerNode->parentNode();
-            topNode = topNode->parentNode();   // SHEZ: this is not really necessary
         }
 
-        // SHEZ: If the next sibling's parent != start's parent, then we need
-        // SHEZ: to move lastNode (our insertion point) up accordingly.
-        // SHEZ: Note that the upstream comment before the previous while loop
-        // SHEZ: is misleading.  All that does is increase the scope of the traversal.
-        if (Node* n = start.deprecatedNode()->traverseNextSibling(outerNode.get())) {
-            Node* s = start.deprecatedNode();
-            while (s->parentNode() && lastNode->parentNode() && s->parentNode() != n->parentNode()) {
+        for (Node* s = start.deprecatedNode(), *n = s->traverseNextSibling(outerNode.get()); n; n = n->traverseNextSibling(outerNode.get())) {
+            // If traverseNextSibling required moving up to a new parent, then
+            // n->parent() will be different from s->parent(). We need to move
+            // lastNode (our insertion point) up accordingly until n->parent()
+            // is the same as s->parent() (i.e, until n and s are direct
+            // siblings).
+            while (s->parentNode() != n->parentNode()) {
                 s = s->parentNode();
                 lastNode = lastNode->parentNode();
             }
-        }
 
-        for (Node* n = start.deprecatedNode()->traverseNextSibling(outerNode.get()); n; n = n->traverseNextSibling(outerNode.get())) {
             RefPtr<Node> clonedNode = n->cloneNode(true);
             insertNodeAfter(clonedNode, lastNode);
             lastNode = clonedNode.release();
