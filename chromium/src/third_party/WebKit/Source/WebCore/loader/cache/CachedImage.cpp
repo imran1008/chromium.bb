@@ -242,7 +242,7 @@ void CachedImage::setContainerSizeForRenderer(const RenderObject* renderer, cons
         FloatRect rc = transform.mapRect(FloatRect(FloatPoint(), fsize));
         float sx = rc.width() / fsize.width();
         float sy = rc.height() / fsize.height();
-        containerScale.scale(ceilf(sx)+1,ceilf(sy)+1);
+        containerScale.scale(sx,sy);
     }
 
     m_svgImageCache->setRequestedSizeAndScales(renderer, SVGImageCache::SizeAndScales(containerSize, containerZoom, containerScale));

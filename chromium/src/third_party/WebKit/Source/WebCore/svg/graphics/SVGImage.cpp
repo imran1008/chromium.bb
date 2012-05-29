@@ -195,7 +195,7 @@ void SVGImage::drawSVGToImageBuffer(ImageBuffer* buffer, const IntSize& size, fl
     scaledRect.scale(scale.width(), scale.height());
 
     // Draw SVG on top of ImageBuffer.
-    draw(buffer->context(), enclosingIntRect(scaledRect), rect, ColorSpaceDeviceRGB, CompositeSourceOver);
+    draw(buffer->context(), scaledRect, rect, ColorSpaceDeviceRGB, CompositeSourceOver);
 
     // Reset container size & zoom to initial state. Otherwhise the size() of this
     // image would return whatever last size was set by drawSVGToImageBuffer().
