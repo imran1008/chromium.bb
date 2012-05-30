@@ -224,7 +224,6 @@ static void paintSkBitmap(PlatformContextSkia* platformContext, const NativeImag
 #endif
     SkPaint paint;
     paint.setXfermodeMode(compOp);
-    paint.setFilterBitmap(true);
     paint.setAlpha(platformContext->getNormalizedAlpha());
     paint.setLooper(platformContext->getDrawLooper());
     // only antialias if we're rotated or skewed
@@ -232,12 +231,16 @@ static void paintSkBitmap(PlatformContextSkia* platformContext, const NativeImag
 
     SkCanvas* canvas = platformContext->canvas();
 
+    SkRect transformedDestRect;
+    canvas->getTotalMatrix().mapRect(&transformedDestRect, destRect);
+
     ResamplingMode resampling;
     if (platformContext->isAccelerated())
         resampling = RESAMPLE_LINEAR;
     else
         resampling = platformContext->printing() ? RESAMPLE_NONE :
-            computeResamplingMode(platformContext, bitmap, srcRect.width(), srcRect.height(), SkScalarToFloat(destRect.width()), SkScalarToFloat(destRect.height()));
+            computeResamplingMode(platformContext, bitmap, srcRect.width(), srcRect.height(), SkScalarToFloat(transformedDestRect.width()), SkScalarToFloat(transformedDestRect.height()));
+    paint.setFilterBitmap(resampling == RESAMPLE_LINEAR);
     if (resampling == RESAMPLE_AWESOME) {
         drawResampledBitmap(*canvas, paint, bitmap, srcRect, destRect);
     } else {
