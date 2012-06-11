@@ -39,6 +39,11 @@
 #include "webkit/tools/test_shell/test_shell_webkit_init.h"
 #include "webkit/tools/test_shell/test_webview_delegate.h"
 
+#include "skia/ext/platform_canvas.h"
+#include "skia/ext/vector_canvas.h"
+#include "skia/ext/vector_platform_device_emf_win.h"
+#include "third_party/skia/include/core/SkBounder.h"
+
 using WebKit::WebWidget;
 
 #define MAX_LOADSTRING 100
@@ -136,6 +141,248 @@ static base::StringPiece GetRawDataResource(HMODULE module, int resource_id) {
                                               &data_size)
       ? base::StringPiece(static_cast<char*>(data_ptr), data_size)
       : base::StringPiece();
+}
+
+struct AutoDcHandle {
+    HDC m_hdc;
+    AutoDcHandle() : m_hdc(NULL) {}
+    ~AutoDcHandle()
+    {
+        if (m_hdc != NULL) DeleteDC(m_hdc);
+    }
+    void reset(HDC hdc)
+    {
+        if (hdc == m_hdc) return;
+        if (m_hdc != NULL) DeleteDC(m_hdc);
+        m_hdc = hdc;
+    }
+    HDC get() const
+    {
+        return m_hdc;
+    }
+};
+
+struct AutoEmfHandle {
+    HENHMETAFILE m_emf;
+    AutoEmfHandle() : m_emf(NULL) {}
+    ~AutoEmfHandle()
+    {
+        if (m_emf != NULL) DeleteEnhMetaFile(m_emf);
+    }
+    void reset(HENHMETAFILE emf)
+    {
+        if (emf == m_emf) return;
+        if (m_emf != NULL) DeleteEnhMetaFile(m_emf);
+        m_emf = emf;
+    }
+    HENHMETAFILE get() const
+    {
+        return m_emf;
+    }
+};
+
+HDC getPrintDC()
+{
+    // from http://msdn.microsoft.com/en-us/library/windows/desktop/dd162833(v=vs.85).aspx
+    PRINTDLG printDialog;
+    ::ZeroMemory(&printDialog, sizeof(printDialog));
+    printDialog.lStructSize = sizeof(printDialog);
+    printDialog.nCopies = 1;
+    printDialog.Flags =
+        // Return a printer device context
+        PD_RETURNDC
+        // Don't allow separate print to file.
+        | PD_HIDEPRINTTOFILE
+        | PD_DISABLEPRINTTOFILE
+        // Don't allow selecting individual document pages to print.
+        | PD_NOSELECTION;
+
+    BOOL shouldPrint = PrintDlg(&printDialog);
+    if (!shouldPrint) {
+        return NULL;
+    }
+    return printDialog.hDC;
+}
+
+BOOL
+PrintBegin(WebKit::WebFrame* printFrame,
+           int widthDots,
+           int heightDots,
+           int printerDpi,
+           int* pages,
+           int* printWidth,
+           int* printHeight,
+           int* printDpi)
+{
+    WebKit::WebSize wsize;
+    int mt = 0, mb = 0, ml = 0, mr = 0;
+    printFrame->pageSizeAndMarginsInPixels(0, wsize, mt, mr, mb, ml);
+    const int hMarginPixels = mr + ml;
+    const int vMarginPixels = mt + mb;
+    const double pixelsPerInch = 96.0;
+    const double hMarginInches = double(hMarginPixels) / pixelsPerInch;
+    const double vMarginInches = double(vMarginPixels) / pixelsPerInch;
+
+    *printWidth = widthDots;
+    *printHeight = heightDots;
+    *printDpi = printerDpi;
+    const double printerDpiFloat = *printDpi;
+    const double widthInches = double(*printWidth ) / double(printerDpiFloat) ;
+    const double heightInches = double(*printHeight ) / double(printerDpiFloat);
+    const double pointsPerInch = 72.0;
+
+    const double widthPoints = (widthInches - hMarginInches) * pointsPerInch ;
+    const double heightPoints = (heightInches - vMarginInches) * pointsPerInch;
+    WebKit::WebSize size(widthPoints, heightPoints);
+    *pages = printFrame->printBegin(size, WebKit::WebNode(), *printDpi);
+    return TRUE;
+}
+
+BOOL
+PrintPage(WebKit::WebFrame* printFrame, int printWidth, int printHeight, int printDpi, int pageToPrint, HDC dc)
+{
+    const double shrinkFactor = printFrame->getPrintPageShrink(pageToPrint);
+    if (0.0f == shrinkFactor) { // zero if page number invalid or not printing
+        return FALSE;
+    }
+    const HDC emfDc = CreateEnhMetaFile(NULL, NULL, NULL, NULL);
+    if (!emfDc) {
+        return FALSE;
+    }
+    SkRefPtr<SkDevice> pDevice = skia::VectorPlatformDeviceEmf::CreateDevice(
+        printWidth, printHeight, true, emfDc);
+    SkRefPtr<skia::VectorCanvas> pCanvas(new skia::VectorCanvas(pDevice.get()));
+
+    pCanvas->clear(SK_ColorWHITE);
+
+    //     SkRefPtr<MaxBounder> pBounder(new MaxBounder());
+    //     pCanvas->setBounder(pBounder.get());
+
+    WebKit::WebSize wsize;
+    int mt = 0, mb = 0, ml = 0, mr = 0;
+    printFrame->pageSizeAndMarginsInPixels(0, wsize, mt, mr, mb, ml);
+
+    const double printerDpiFloat = printDpi;
+    const double pointsPerInch = 72.0;
+    const double dotsPerPoint = printerDpiFloat/pointsPerInch;
+    const double scaleFactor = shrinkFactor * dotsPerPoint;
+
+    const double pixelsPerInch = 96.0;
+    const double marginLeftInches = double(ml) / pixelsPerInch;
+    const double marginTopInches = double(mt) / pixelsPerInch;
+    const double marginLeftDots = marginLeftInches * printerDpiFloat;
+    const double marginTopDots = marginTopInches * printerDpiFloat;
+
+    pCanvas->translate(marginLeftDots, marginTopDots);
+    pCanvas->scale(scaleFactor, scaleFactor);
+
+    printFrame->printPage(pageToPrint, pCanvas.get());
+
+    AutoEmfHandle emfHandle;
+    emfHandle.reset(CloseEnhMetaFile(emfDc));
+
+    if (!emfHandle.get()) {
+        return FALSE;
+    }
+
+    // calculate bounds
+    RECT rect;
+    {
+        ENHMETAHEADER header;
+        if (GetEnhMetaFileHeader(emfHandle.get(), sizeof(header), &header) != sizeof(header)) {
+            return FALSE;
+        }
+        rect.left = header.rclBounds.left;
+        rect.top = header.rclBounds.top;
+        rect.right = header.rclBounds.right;
+        rect.bottom = header.rclBounds.bottom;
+        if (header.rclBounds.left == 0 &&
+            header.rclBounds.top == 0 &&
+            header.rclBounds.right == -1 &&
+            header.rclBounds.bottom == -1)
+        {
+            // A freshly created EMF buffer that has no drawing operation has invalid
+            // bounds. Instead of having an (0,0) size, it has a (-1,-1) size. Detect
+            // this special case and returns an empty Rect instead of an invalid one.
+            rect.right = 0;
+            rect.bottom = 0;
+        }
+    }
+    if (!PlayEnhMetaFile(dc, emfHandle.get(), &rect)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+BOOL
+PrintEnd(WebKit::WebFrame* printFrame)
+{
+    printFrame->printEnd();
+    return TRUE;
+}
+
+void RequestPrint(TestShell* shell)
+{
+    AutoDcHandle autoDcHandle;
+
+    // fallback to PrintDlg() if wintrv can't get us the print dc
+    {
+        HDC printDc = getPrintDC();
+        if (!printDc) {
+            return;
+        }
+        autoDcHandle.reset(printDc);
+    }
+    const int dpi = GetDeviceCaps(autoDcHandle.get(), LOGPIXELSX);
+    assert(dpi == GetDeviceCaps(autoDcHandle.get(), LOGPIXELSY));
+    const int width = GetDeviceCaps(autoDcHandle.get(), HORZRES);
+    const int height = GetDeviceCaps(autoDcHandle.get(), VERTRES);
+    DOCINFO docInfo;
+    ::ZeroMemory(&docInfo, sizeof(docInfo));
+    docInfo.cbSize = sizeof(docInfo);
+    docInfo.lpszDocName = L"BLP Full-Page Print";
+
+    WebKit::WebFrame* printFrame = shell->webView()->mainFrame();
+
+    int pageCount = -1;
+    int printWidth, printHeight, printDpi;
+    PrintBegin(printFrame, width, height, dpi, &pageCount, &printWidth, &printHeight, &printDpi);
+
+    if (0 >= ::StartDoc(autoDcHandle.get(), &docInfo)) {
+        PrintEnd(printFrame);
+        return;
+    }
+
+    for (int i=0; i<pageCount; ++i)
+    {
+        if (0 >= ::StartPage(autoDcHandle.get())) {
+            ::EndPage(autoDcHandle.get()); // example usage still does EndPage on error
+            ::EndDoc(autoDcHandle.get()); // example usage still does EndDoc on error
+            PrintEnd(printFrame);
+            return;
+        }
+
+        if (!PrintPage(printFrame, printWidth, printHeight, printDpi, i, autoDcHandle.get())) {
+            ::EndPage(autoDcHandle.get()); // example usage still does EndPage on error
+            ::EndDoc(autoDcHandle.get()); // example usage still does EndDoc on error
+            PrintEnd(printFrame);
+            return;
+        }
+
+        if (0 >= ::EndPage(autoDcHandle.get())) {
+            ::EndDoc(autoDcHandle.get()); // example usage still does EndDoc on error
+            PrintEnd(printFrame);
+            return;
+        }
+    }
+
+    if (0 >= ::EndDoc(autoDcHandle.get())) {
+        PrintEnd(printFrame);
+        return;
+    }
+
+    PrintEnd(printFrame);
 }
 
 }  // namespace
@@ -532,6 +779,9 @@ LRESULT CALLBACK TestShell::WndProc(HWND hwnd, UINT message, WPARAM wParam,
         break;
       case IDM_DUMP_RENDER_TREE:
         shell->DumpRenderTree();
+        break;
+      case IDM_PRINT:
+        RequestPrint(shell);
         break;
       case IDM_ENABLE_IMAGES:
       case IDM_ENABLE_PLUGINS:

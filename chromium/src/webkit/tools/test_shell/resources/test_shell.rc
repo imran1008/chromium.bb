@@ -40,6 +40,7 @@ IDC_TESTSHELL MENU
 BEGIN
     POPUP "&File"
     BEGIN
+        MENUITEM "&Print",               IDM_PRINT
         MENUITEM "E&xit",                IDM_EXIT
     END
     POPUP "&Debug"

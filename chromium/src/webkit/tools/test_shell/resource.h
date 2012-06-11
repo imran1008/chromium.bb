@@ -20,6 +20,7 @@
 #define IDM_ENABLE_PLUGINS        115
 #define IDM_ENABLE_SCRIPTS        116
 #define IDM_SHOW_DEV_TOOLS        112
+#define IDM_PRINT                 27
 #define IDI_TESTSHELL             107
 #define IDI_SMALL                 108
 #define IDC_TESTSHELL             109
