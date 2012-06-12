@@ -344,10 +344,10 @@ SkGDIFontSetup::~SkGDIFontSetup() {
   }
 }
 
-static SkScalar getAscent(const SkPaint& paint) {
+static SkScalar getFontTop(const SkPaint& paint) {
   SkPaint::FontMetrics fm;
   paint.getFontMetrics(&fm);
-  return fm.fAscent;
+  return fm.fTop;
 }
 
 // return the options int for ExtTextOut. Only valid if the paint's text
@@ -372,7 +372,7 @@ void VectorPlatformDeviceEmf::drawText(const SkDraw& draw,
       && setup.useGDI(hdc_, paint)) {
     UINT options = getTextOutOptions(paint);
     UINT count = byteLength >> 1;
-    ExtTextOut(hdc_, SkScalarRound(x), SkScalarRound(y + getAscent(paint)),
+    ExtTextOut(hdc_, SkScalarRound(x), SkScalarRound(y + getFontTop(paint)),
         options, 0, reinterpret_cast<const wchar_t*>(text), count, NULL);
   } else {
     SkPath path;
@@ -406,7 +406,7 @@ void VectorPlatformDeviceEmf::drawPosText(const SkDraw& draw,
       && SkPaint::kUTF8_TextEncoding != paint.getTextEncoding()
       && setup.useGDI(hdc_, paint)) {
     int startX = SkScalarRound(pos[0]);
-    int startY = SkScalarRound(pos[1] + getAscent(paint));
+    int startY = SkScalarRound(pos[1] + getFontTop(paint));
     const int count = len >> 1;
     SkAutoSTMalloc<64, INT> storage(count);
     INT* advances = storage.get();
