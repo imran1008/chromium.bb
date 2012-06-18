@@ -57,6 +57,7 @@ close FH;
 my %documents;
 my %interfaceNameToIdlFile;
 foreach my $idlFile (@idlFiles) {
+    $idlFile =~ s/\s+$//s;
     my $fullPath = Cwd::realpath($idlFile);
     my $parser = IDLParser->new(!$verbose);
     $documents{$fullPath} = $parser->Parse($idlFile, $defines, $preprocessor);
