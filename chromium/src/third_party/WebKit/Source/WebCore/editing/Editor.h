@@ -108,6 +108,9 @@ public:
     bool tryDHTMLCut();
     bool tryDHTMLPaste();
 
+    bool postCut();
+    bool postCopy();
+
     bool canCut() const;
     bool canCopy() const;
     bool canPaste() const;

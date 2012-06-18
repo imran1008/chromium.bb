@@ -208,6 +208,17 @@ bool Editor::canDHTMLPaste()
     return !dispatchCPPEvent(eventNames().beforepasteEvent, ClipboardNumb);
 }
 
+
+bool Editor::postCut()
+{
+    return !dispatchCPPEvent("aftercut", ClipboardWritable);
+}
+
+bool Editor::postCopy()
+{
+    return !dispatchCPPEvent("aftercopy", ClipboardWritable);
+}
+
 bool Editor::canCut() const
 {
     return canCopy() && canDelete();

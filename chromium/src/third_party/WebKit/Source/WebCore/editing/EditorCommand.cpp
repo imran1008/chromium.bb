@@ -285,6 +285,7 @@ static bool executeBackColor(Frame* frame, Event*, EditorCommandSource source, c
 static bool executeCopy(Frame* frame, Event*, EditorCommandSource, const String&)
 {
     frame->editor()->copy();
+    frame->editor()->postCopy();
     return true;
 }
 
@@ -302,8 +303,10 @@ static bool executeCut(Frame* frame, Event*, EditorCommandSource source, const S
     if (source == CommandFromMenuOrKeyBinding) {
         UserTypingGestureIndicator typingGestureIndicator(frame);
         frame->editor()->cut();
-    } else
+    } else {
         frame->editor()->cut();
+    }
+    frame->editor()->postCut();
     return true;
 }
 
