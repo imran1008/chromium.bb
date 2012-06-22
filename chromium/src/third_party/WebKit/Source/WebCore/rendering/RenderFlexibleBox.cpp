@@ -595,7 +595,7 @@ LayoutUnit RenderFlexibleBox::computeAvailableFreeSpace(LayoutUnit preferredMain
         return mainAxisContentExtent() - preferredMainAxisExtent;
 
     if (hasOverrideHeight())
-        return overrideHeight();
+        return overrideHeight() - preferredMainAxisExtent;
 
     LayoutUnit heightResult = computeContentLogicalHeightUsing(style()->logicalHeight());
     if (heightResult == -1)
