@@ -295,7 +295,8 @@ void FrameSelection::setSelection(const VisibleSelection& newSelection, SetSelec
     m_xPosForVerticalArrowNavigation = NoXPosForVerticalArrowNavigation();
     selectFrameElementInParentIfFullySelected();
     notifyRendererOfSelectionChange(userTriggered);
-    m_frame->editor()->respondToChangedSelection(oldSelection, options);
+    if (!(options & DoNotSetFocus))
+        m_frame->editor()->respondToChangedSelection(oldSelection, options);
     if (userTriggered == UserTriggered) {
         ScrollAlignment alignment;
 
