@@ -48,6 +48,7 @@
 #include "RenderWordBreak.h"
 #include "ScriptEventListener.h"
 #include "Settings.h"
+#include "SpellChecker.h"
 #include "Text.h"
 #include "TextIterator.h"
 #include "XMLNames.h"
@@ -345,8 +346,15 @@ String HTMLElement::outerHTML() const
 void HTMLElement::setInnerHTML(const String& html, ExceptionCode& ec)
 {
     RefPtr<DocumentFragment> fragment = createFragmentFromSource(html, this, ec);
-    if (fragment)
+    if (fragment) {
         replaceChildrenWithFragment(this, fragment.release(), ec);
+        if (inDocument() && renderer() && rootEditableElement() == this && isSpellCheckingEnabled()) {
+            if (document()->frame() && document()->frame()->editor() && document()->frame()->editor()->spellChecker()) {
+                RefPtr<Range> rangeToCheck = Range::create(document(), firstPositionInNode(this), lastPositionInNode(this));
+                document()->frame()->editor()->spellChecker()->requestCheckingFor(SpellCheckRequest::create(TextCheckingTypeSpelling | TextCheckingTypeGrammar, TextCheckingProcessBatch, rangeToCheck, rangeToCheck));
+            }
+        }
+    }
 }
 
 static void mergeWithNextTextNode(PassRefPtr<Node> node, ExceptionCode& ec)
