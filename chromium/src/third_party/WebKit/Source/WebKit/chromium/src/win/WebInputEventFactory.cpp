@@ -200,7 +200,22 @@ WebMouseEvent WebInputEventFactory::mouseEvent(HWND hwnd, UINT message,
         result.button = WebMouseEvent::ButtonNone;
         // set the current mouse position (relative to the client area of the
         // current window) since none is specified for this event
-        lparam = GetRelativeCursorPos(hwnd);
+        {
+            // set current mouse position to cursor position if it is outside hwnd client rect,
+            // otherwise fake one (-1,-1) outside client rect.
+            POINT pos = {-1, -1};
+            GetCursorPos(&pos);
+            ScreenToClient(hwnd, &pos);
+            
+            RECT rc;
+            ::GetClientRect(hwnd, &rc);
+            if (pos.x >= rc.left && pos.x <= rc.right && pos.y >= rc.top && pos.y <= rc.bottom)
+            {
+                pos.x = -1;
+                pos.y = -1;
+            }
+            lparam = MAKELPARAM(pos.x, pos.y);
+        }
         break;
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
