@@ -36,6 +36,8 @@
 #include "platform.h"
 #include "vm-state-inl.h"
 
+#include <map>
+
 #ifdef _MSC_VER
 
 // Case-insensitive bounded string comparisons. Use stricmp() on Win32. Usually
@@ -131,8 +133,58 @@ int random() {
   return rand();
 }
 
+#ifdef DEBUG
+typedef std::map<void*, unsigned int> VAMap;
+
+static VAMap va_map_reserved;
+static VAMap va_map_committed;
+
+
+static unsigned int total_reserved = 0;
+static unsigned int total_committed = 0;
+static int allocs = 0;
+static int frees = 0;
+static int commits = 0;
+static int decommits = 0;           // includes implied decommits
+static int separate_commits = 0;    // commits not on reserved boundaries
+static int separate_decommits = 0;  // decommits not on reserved boundaries
+static int duplicate_reserved = 0;  // duplicate reserve requests
+static int alloc_errors = 0;        // number of alloc errors
+#endif
 
 namespace v8 {
+#ifdef DEBUG
+VirtualAllocStatistics::VirtualAllocStatistics()
+: reserved_(0)
+, committed_(0)
+, allocs_(0)
+, frees_(0)
+, commits_(0)
+, decommits_(0)
+, outstanding_reserved_(0)
+, outstanding_committed_(0)
+, separate_commits_(0)
+, separate_decommits_(0)
+, duplicate_reserved_(0)
+, alloc_errors_(0)
+{}
+
+void V8::GetVirtualAllocStatistics(VirtualAllocStatistics* valloc_stats) {
+  valloc_stats->set_reserved(total_reserved/1024);
+  valloc_stats->set_committed(total_committed/1024);
+  valloc_stats->set_allocs(allocs);
+  valloc_stats->set_frees(frees);
+  valloc_stats->set_commits(commits);
+  valloc_stats->set_decommits(decommits);
+  valloc_stats->set_outstanding_reserved(va_map_reserved.size());
+  valloc_stats->set_outstanding_committed(va_map_committed.size());
+  valloc_stats->set_separate_commits(separate_commits);
+  valloc_stats->set_separate_decommits(separate_decommits);
+  valloc_stats->set_duplicate_reserved(duplicate_reserved);
+  valloc_stats->set_alloc_errors(alloc_errors);
+}
+#endif
+
 namespace internal {
 
 intptr_t OS::MaxVirtualMemory() {
@@ -902,19 +954,115 @@ static void* GetRandomAddr() {
 }
 
 
+static unsigned int roundup(int size)
+{
+    return ((size + 65535) / 65536) * 65536;
+}
+
+#ifdef DEBUG
+static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
+                                    SIZE_T dwSize,
+                                    DWORD flAllocationType,
+                                    DWORD flProtect)
+{
+    LPVOID res;
+
+    res = VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
+
+    if(res == NULL) {
+        alloc_errors++;
+        return res;
+    }
+
+    if(flAllocationType & MEM_RESERVE) {
+        unsigned int roundedsize = roundup(dwSize);
+
+        bool already = false;
+        if(lpAddress != NULL) {
+            VAMap::iterator reserved_it = va_map_reserved.find(res);
+            if(reserved_it != va_map_reserved.end()) {
+                already = true;
+                duplicate_reserved++;
+            }
+        }
+        if(!already) {
+            va_map_reserved[res] = dwSize;
+            total_reserved += roundedsize;
+            allocs++;
+        }
+    }
+
+    if(flAllocationType & MEM_COMMIT) {
+
+        VAMap::iterator reserved_it = va_map_reserved.find(res);
+        if(reserved_it == va_map_reserved.end()) {
+            separate_commits++;
+        }
+
+        total_committed += dwSize;
+        va_map_committed[res] = dwSize;
+        commits++;
+    }
+
+    return res;
+}
+
+BOOL MonitoredVirtualFree(LPVOID lpAddress,
+                          SIZE_T dwSize,
+                          DWORD dwFreeType)
+{
+    BOOL res;
+    VAMap::iterator reserved_it = va_map_reserved.find(lpAddress);
+    VAMap::iterator committed_it = va_map_committed.find(lpAddress);
+
+    res = VirtualFree(lpAddress, dwSize, dwFreeType);
+
+    if(dwFreeType & MEM_DECOMMIT) {
+        if(committed_it != va_map_committed.end()) {
+            total_committed -= dwSize ? dwSize : committed_it->second;
+            va_map_committed.erase(committed_it);
+            decommits++;
+        }
+    } else if(dwFreeType & MEM_RELEASE) {
+        if(committed_it != va_map_committed.end()) {
+            total_committed -= committed_it->second;
+            va_map_committed.erase(committed_it);
+            decommits++;
+            if(reserved_it == va_map_reserved.end()) {
+                separate_decommits++;
+            }
+        }
+        if(reserved_it != va_map_reserved.end()) {
+            total_reserved -= roundup(reserved_it->second);
+            va_map_reserved.erase(reserved_it);
+        }
+        frees++;
+    }
+
+    return res;
+}
+#endif
+
 static void* RandomizedVirtualAlloc(size_t size, int action, int protection) {
   LPVOID base = NULL;
 
   if (protection == PAGE_EXECUTE_READWRITE || protection == PAGE_NOACCESS) {
     // For exectutable pages try and randomize the allocation address
     for (size_t attempts = 0; base == NULL && attempts < 3; ++attempts) {
+#ifdef DEBUG
+      base = MonitoredVirtualAlloc(GetRandomAddr(), size, action, protection);
+#else
       base = VirtualAlloc(GetRandomAddr(), size, action, protection);
+#endif
     }
   }
 
   // After three attempts give up and let the OS find an address to use.
+#ifdef DEBUG
+  if (base == NULL) base = MonitoredVirtualAlloc(NULL, size, action, protection);
+#else
   if (base == NULL) base = VirtualAlloc(NULL, size, action, protection);
-
+#endif
   return base;
 }
 
@@ -947,7 +1095,11 @@ void* OS::Allocate(const size_t requested,
 
 void OS::Free(void* address, const size_t size) {
   // TODO(1240712): VirtualFree has a return value which is ignored here.
+#ifdef DEBUG
+  MonitoredVirtualFree(address, 0, MEM_RELEASE);
+#else
   VirtualFree(address, 0, MEM_RELEASE);
+#endif
   USE(size);
 }
 
@@ -1480,7 +1632,11 @@ VirtualMemory::VirtualMemory(size_t size, size_t alignment)
   bool result = ReleaseRegion(address, request_size);
   USE(result);
   ASSERT(result);
+#ifdef DEBUG
+  address = MonitoredVirtualAlloc(base, size, MEM_RESERVE, PAGE_NOACCESS);
+#else
   address = VirtualAlloc(base, size, MEM_RESERVE, PAGE_NOACCESS);
+#endif
   if (address != NULL) {
     request_size = size;
     ASSERT(base == static_cast<Address>(address));
@@ -1536,7 +1692,11 @@ void* VirtualMemory::ReserveRegion(size_t size) {
 
 bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
   int prot = is_executable ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
+#ifdef DEBUG
+  if (NULL == MonitoredVirtualAlloc(base, size, MEM_COMMIT, prot)) {
+#else
   if (NULL == VirtualAlloc(base, size, MEM_COMMIT, prot)) {
+#endif
     return false;
   }
 
@@ -1546,7 +1706,11 @@ bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
 
 
 bool VirtualMemory::Guard(void* address) {
+#ifdef DEBUG
+  if (NULL == MonitoredVirtualAlloc(address,
+#else
   if (NULL == VirtualAlloc(address,
+#endif
                            OS::CommitPageSize(),
                            MEM_COMMIT,
                            PAGE_READONLY | PAGE_GUARD)) {
@@ -1557,12 +1721,20 @@ bool VirtualMemory::Guard(void* address) {
 
 
 bool VirtualMemory::UncommitRegion(void* base, size_t size) {
+#ifdef DEBUG
+  return MonitoredVirtualFree(base, size, MEM_DECOMMIT) != 0;
+#else
   return VirtualFree(base, size, MEM_DECOMMIT) != 0;
+#endif
 }
 
 
 bool VirtualMemory::ReleaseRegion(void* base, size_t size) {
+#ifdef DEBUG
+  return MonitoredVirtualFree(base, 0, MEM_RELEASE) != 0;
+#else
   return VirtualFree(base, 0, MEM_RELEASE) != 0;
+#endif
 }
 
 
@@ -2107,6 +2279,7 @@ void Sampler::Stop() {
   SamplerThread::RemoveActiveSampler(this);
   SetActive(false);
 }
+
 
 
 } }  // namespace v8::internal
