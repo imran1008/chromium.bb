@@ -22,6 +22,8 @@
 #include "RefCountedLeakCounter.h"
 
 #include <wtf/HashCountedSet.h>
+#include <map>
+#include <string>
 
 namespace WTF {
 
@@ -44,6 +46,10 @@ static WTFLogChannel LogRefCountedLeaks = { 0x00000000, "", WTFLogChannelOn };
 typedef HashCountedSet<const char*, PtrHash<const char*> > ReasonSet;
 static ReasonSet* leakMessageSuppressionReasons;
 
+
+typedef std::map<std::string, RefCountedLeakCounter*> ObjectMap;
+static ObjectMap* leakCountedObjectMap;
+
 void RefCountedLeakCounter::suppressMessages(const char* reason)
 {
     if (!leakMessageSuppressionReasons)
@@ -61,6 +67,10 @@ void RefCountedLeakCounter::cancelMessageSuppression(const char* reason)
 RefCountedLeakCounter::RefCountedLeakCounter(const char* description)
     : m_description(description)
 {
+    if (!leakCountedObjectMap)
+        leakCountedObjectMap = new ObjectMap();
+    leakCountedObjectMap->insert(std::pair<const char*, RefCountedLeakCounter*>
+        (description, this));
 }    
 
 RefCountedLeakCounter::~RefCountedLeakCounter()
@@ -75,6 +85,7 @@ RefCountedLeakCounter::~RefCountedLeakCounter()
             loggedSuppressionReason = true;
         }
     }
+    leakCountedObjectMap->erase(m_description);
 }
 
 void RefCountedLeakCounter::increment()
@@ -86,6 +97,17 @@ void RefCountedLeakCounter::decrement()
 {
     atomicDecrement(&m_count);
 }
+
+int RefCountedLeakCounter::getObjectCount(const char* desc)
+{
+    if (!leakCountedObjectMap)
+        return 0;
+    ObjectMap::iterator it = leakCountedObjectMap->find(desc);
+    if (it == leakCountedObjectMap->end())
+        return 0;
+    return it->second->m_count;
+}
+
 
 #endif
 

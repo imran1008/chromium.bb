@@ -35,8 +35,11 @@ namespace WTF {
 
         WTF_EXPORT_PRIVATE void increment();
         WTF_EXPORT_PRIVATE void decrement();
+        
+
 
 #ifndef NDEBUG
+        WTF_EXPORT_PRIVATE static int RefCountedLeakCounter::getObjectCount(const char* desc);
     private:
 #if COMPILER(MINGW) || COMPILER(MSVC7_OR_LOWER) || OS(WINCE)
         int m_count;
