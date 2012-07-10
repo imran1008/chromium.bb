@@ -209,7 +209,7 @@ WebMouseEvent WebInputEventFactory::mouseEvent(HWND hwnd, UINT message,
             
             RECT rc;
             ::GetClientRect(hwnd, &rc);
-            if (pos.x >= rc.left && pos.x <= rc.right && pos.y >= rc.top && pos.y <= rc.bottom)
+            if (pos.x >= rc.left && pos.x < rc.right && pos.y >= rc.top && pos.y < rc.bottom)
             {
                 pos.x = -1;
                 pos.y = -1;
