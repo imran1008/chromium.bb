@@ -38,6 +38,8 @@ RefCountedLeakCounter::~RefCountedLeakCounter() { }
 void RefCountedLeakCounter::increment() { }
 void RefCountedLeakCounter::decrement() { }
 
+int RefCountedLeakCounter::getObjectCount(const char* desc) { return 0; }
+
 #else
 
 #define LOG_CHANNEL_PREFIX Log
@@ -101,10 +103,10 @@ void RefCountedLeakCounter::decrement()
 int RefCountedLeakCounter::getObjectCount(const char* desc)
 {
     if (!leakCountedObjectMap)
-        return 0;
-    ObjectMap::iterator it = leakCountedObjectMap->find(desc);
+        return -2;
+    ObjectMap::const_iterator it = leakCountedObjectMap->find(desc);
     if (it == leakCountedObjectMap->end())
-        return 0;
+        return -1;
     return it->second->m_count;
 }
 
