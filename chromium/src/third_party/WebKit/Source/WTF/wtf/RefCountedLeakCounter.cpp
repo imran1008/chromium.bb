@@ -38,7 +38,7 @@ RefCountedLeakCounter::~RefCountedLeakCounter() { }
 void RefCountedLeakCounter::increment() { }
 void RefCountedLeakCounter::decrement() { }
 
-int RefCountedLeakCounter::getObjectCount(const char* desc) { return 0; }
+int RefCountedLeakCounter::getObjectCount(const char* desc) { return -2; }
 
 #else
 
