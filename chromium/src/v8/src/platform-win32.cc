@@ -138,50 +138,31 @@ typedef std::map<void*, unsigned int> VAMap;
 
 static VAMap va_map_reserved;
 static VAMap va_map_committed;
+static v8::VirtualAllocStatistics va_statistics;
 
-
-static unsigned int total_reserved = 0;
-static unsigned int total_committed = 0;
-static int allocs = 0;
-static int frees = 0;
-static int commits = 0;
-static int decommits = 0;           // includes implied decommits
-static int separate_commits = 0;    // commits not on reserved boundaries
-static int separate_decommits = 0;  // decommits not on reserved boundaries
-static int duplicate_reserved = 0;  // duplicate reserve requests
-static int alloc_errors = 0;        // number of alloc errors
 #endif
 
 namespace v8 {
 #ifdef DEBUG
 VirtualAllocStatistics::VirtualAllocStatistics()
-: reserved_(0)
-, committed_(0)
-, allocs_(0)
-, frees_(0)
-, commits_(0)
-, decommits_(0)
-, outstanding_reserved_(0)
-, outstanding_committed_(0)
-, separate_commits_(0)
-, separate_decommits_(0)
-, duplicate_reserved_(0)
-, alloc_errors_(0)
+: reserved(0)
+, committed(0)
+, allocs(0)
+, frees(0)
+, commits(0)
+, decommits(0)
+, outstanding_reserved(0)
+, outstanding_committed(0)
+, separate_commits(0)
+, separate_decommits(0)
+, duplicate_reserved(0)
+, alloc_errors(0)
 {}
 
-void V8::GetVirtualAllocStatistics(VirtualAllocStatistics* valloc_stats) {
-  valloc_stats->set_reserved(total_reserved/1024);
-  valloc_stats->set_committed(total_committed/1024);
-  valloc_stats->set_allocs(allocs);
-  valloc_stats->set_frees(frees);
-  valloc_stats->set_commits(commits);
-  valloc_stats->set_decommits(decommits);
-  valloc_stats->set_outstanding_reserved(va_map_reserved.size());
-  valloc_stats->set_outstanding_committed(va_map_committed.size());
-  valloc_stats->set_separate_commits(separate_commits);
-  valloc_stats->set_separate_decommits(separate_decommits);
-  valloc_stats->set_duplicate_reserved(duplicate_reserved);
-  valloc_stats->set_alloc_errors(alloc_errors);
+const VirtualAllocStatistics& V8::GetVirtualAllocStatistics() {
+  va_statistics.outstanding_reserved = va_map_reserved.size();
+  va_statistics.outstanding_committed = va_map_committed.size();
+  return va_statistics;
 }
 #endif
 
@@ -970,7 +951,7 @@ static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
     res = VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 
     if(res == NULL) {
-        alloc_errors++;
+        va_statistics.alloc_errors++;
         return res;
     }
 
@@ -982,13 +963,13 @@ static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
             VAMap::iterator reserved_it = va_map_reserved.find(res);
             if(reserved_it != va_map_reserved.end()) {
                 already = true;
-                duplicate_reserved++;
+                va_statistics.duplicate_reserved++;
             }
         }
         if(!already) {
             va_map_reserved[res] = dwSize;
-            total_reserved += roundedsize;
-            allocs++;
+            va_statistics.reserved += roundedsize;
+            va_statistics.allocs++;
         }
     }
 
@@ -996,12 +977,12 @@ static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
 
         VAMap::iterator reserved_it = va_map_reserved.find(res);
         if(reserved_it == va_map_reserved.end()) {
-            separate_commits++;
+            va_statistics.separate_commits++;
         }
 
-        total_committed += dwSize;
+        va_statistics.committed += dwSize;
         va_map_committed[res] = dwSize;
-        commits++;
+        va_statistics.commits++;
     }
 
     return res;
@@ -1019,24 +1000,24 @@ BOOL MonitoredVirtualFree(LPVOID lpAddress,
 
     if(dwFreeType & MEM_DECOMMIT) {
         if(committed_it != va_map_committed.end()) {
-            total_committed -= dwSize ? dwSize : committed_it->second;
+            va_statistics.committed -= dwSize ? dwSize : committed_it->second;
             va_map_committed.erase(committed_it);
-            decommits++;
+            va_statistics.decommits++;
         }
     } else if(dwFreeType & MEM_RELEASE) {
         if(committed_it != va_map_committed.end()) {
-            total_committed -= committed_it->second;
+            va_statistics.committed -= committed_it->second;
             va_map_committed.erase(committed_it);
-            decommits++;
+            va_statistics.decommits++;
             if(reserved_it == va_map_reserved.end()) {
-                separate_decommits++;
+                va_statistics.separate_decommits++;
             }
         }
         if(reserved_it != va_map_reserved.end()) {
-            total_reserved -= roundup(reserved_it->second);
+            va_statistics.reserved -= roundup(reserved_it->second);
             va_map_reserved.erase(reserved_it);
         }
-        frees++;
+        va_statistics.frees++;
     }
 
     return res;
@@ -2279,6 +2260,7 @@ void Sampler::Stop() {
   SamplerThread::RemoveActiveSampler(this);
   SetActive(false);
 }
+
 
 
 

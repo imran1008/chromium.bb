@@ -2724,52 +2724,25 @@ class V8EXPORT HeapStatistics {
 };
 
 #ifdef DEBUG
-class V8EXPORT VirtualAllocStatistics {
+// Sizes are in Bytes
+struct V8EXPORT VirtualAllocStatistics {
  public:
   VirtualAllocStatistics();
-  size_t reserved() { return reserved_; }
-  size_t committed() { return committed_; }
-  size_t allocs() { return allocs_; }
-  size_t frees() { return frees_; }
-  size_t commits() { return commits_; }
-  size_t decommits() { return decommits_; }
-  size_t outstanding_reserved() { return outstanding_reserved_; }
-  size_t outstanding_committed() { return outstanding_committed_; }
-  size_t separate_commits() { return separate_commits_; }
-  size_t separate_decommits() { return separate_decommits_; }
-  size_t duplicate_reserved() { return duplicate_reserved_; }
-  size_t alloc_errors() { return alloc_errors_; }
 
- private:
-  void set_reserved(size_t size) { reserved_ = size; }
-  void set_committed(size_t size) { committed_ = size; }
-  void set_allocs(size_t size) { allocs_ = size; }
-  void set_frees(size_t size) { frees_ = size; }
-  void set_commits(size_t size) { commits_ = size; }
-  void set_decommits(size_t size) { decommits_ = size; }
-  void set_outstanding_reserved(size_t size) { outstanding_reserved_ = size; }
-  void set_outstanding_committed(size_t size) { outstanding_committed_ = size; }
-  void set_separate_commits(size_t size) { separate_commits_ = size; }
-  void set_separate_decommits(size_t size) { separate_decommits_ = size; }
-  void set_duplicate_reserved(size_t size) { duplicate_reserved_ = size; }
-  void set_alloc_errors(size_t size) { alloc_errors_ = size; }
-
-  size_t reserved_;
-  size_t committed_;
-  size_t allocs_;
-  size_t frees_;
-  size_t commits_;
-  size_t decommits_;
-  size_t outstanding_reserved_;
-  size_t outstanding_committed_;
-  size_t separate_commits_;
-  size_t separate_decommits_;
-  size_t duplicate_reserved_;
-  size_t alloc_errors_;
-
-  friend class V8;
+  size_t reserved;
+  size_t committed;
+  size_t allocs;
+  size_t frees;
+  size_t commits;
+  size_t decommits;
+  size_t outstanding_reserved;
+  size_t outstanding_committed;
+  size_t separate_commits;
+  size_t separate_decommits;
+  size_t duplicate_reserved;
+  size_t alloc_errors;
 };
-#endif
+#endif //DEBUG
 
 class RetainedObjectInfo;
 
@@ -3337,8 +3310,7 @@ class V8EXPORT V8 {
   /**
    * Get statistics about the VirtualAlloc memory usage.
    */
-  static void GetVirtualAllocStatistics(
-      VirtualAllocStatistics* virtual_alloc_statistics);
+  static const VirtualAllocStatistics& GetVirtualAllocStatistics();
   #endif
 
  private:
