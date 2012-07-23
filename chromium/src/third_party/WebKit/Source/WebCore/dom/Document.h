@@ -205,7 +205,10 @@ struct FormElementKeyHash {
 };
 
 struct FormElementKeyHashTraits : WTF::GenericHashTraits<FormElementKey> {
+#pragma warning(push)
+#pragma warning(disable:4291)
     static void constructDeletedValue(FormElementKey& slot) { new (NotNull, &slot) FormElementKey(WTF::HashTableDeletedValue); }
+#pragma warning(pop)
     static bool isDeletedValue(const FormElementKey& value) { return value.isHashTableDeletedValue(); }
 };
 
@@ -796,7 +799,10 @@ public:
         REGIONLAYOUTUPDATE_LISTENER          = 0x8000
     };
 
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool hasListenerType(ListenerType listenerType) const { return (m_listenerTypes & listenerType); }
+#pragma warning(pop)
     void addListenerType(ListenerType listenerType) { m_listenerTypes = m_listenerTypes | listenerType; }
     void addListenerTypeIfNeeded(const AtomicString& eventType);
 
@@ -1072,7 +1078,10 @@ public:
     const QualifiedName& idAttributeName() const { return m_idAttributeName; }
     
 #if ENABLE(FULLSCREEN_API)
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool webkitIsFullScreen() const { return m_fullScreenElement.get(); }
+#pragma warning(pop)
     bool webkitFullScreenKeyboardInputAllowed() const { return m_fullScreenElement.get() && m_areKeysEnabledInFullScreen; }
     Element* webkitCurrentFullScreenElement() const { return m_fullScreenElement.get(); }
     
@@ -1112,7 +1121,10 @@ public:
     // Used to allow element that loads data without going through a FrameLoader to delay the 'load' event.
     void incrementLoadEventDelayCount() { ++m_loadEventDelayCount; }
     void decrementLoadEventDelayCount();
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool isDelayingLoadEvent() const { return m_loadEventDelayCount; }
+#pragma warning(pop)
 
 #if ENABLE(TOUCH_EVENTS)
     PassRefPtr<Touch> createTouch(DOMWindow*, EventTarget*, int identifier, int pageX, int pageY, int screenX, int screenY, int radiusX, int radiusY, float rotationAngle, float force, ExceptionCode&) const;

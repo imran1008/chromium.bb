@@ -120,7 +120,10 @@ protected:
 
 private:
 #ifndef NDEBUG
+#pragma warning(push)
+#pragma warning(disable:4396)
     friend void adopted<>(TreeShared<T>*);
+#pragma warning(pop)
 #endif
 
     T* m_parent;

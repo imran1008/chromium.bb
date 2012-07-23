@@ -123,7 +123,10 @@ private:
     StringImpl(unsigned length, Force8Bit)
         : m_refCount(s_refCountIncrement)
         , m_length(length)
+#pragma warning(push)
+#pragma warning(disable:4355)
         , m_data8(reinterpret_cast<const LChar*>(this + 1))
+#pragma warning(pop)
         , m_buffer(0)
         , m_hashAndFlags(s_hashFlag8BitBuffer | BufferInternal)
     {
@@ -135,7 +138,10 @@ private:
     StringImpl(unsigned length)
         : m_refCount(s_refCountIncrement)
         , m_length(length)
+#pragma warning(push)
+#pragma warning(disable:4355)
         , m_data16(reinterpret_cast<const UChar*>(this + 1))
+#pragma warning(pop)
         , m_buffer(0)
         , m_hashAndFlags(BufferInternal)
     {
@@ -284,7 +290,10 @@ public:
     WTF_EXPORT_PRIVATE static PassRefPtr<StringImpl> adopt(StringBuffer<UChar>& buffer);
 
     unsigned length() const { return m_length; }
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool is8Bit() const { return m_hashAndFlags & s_hashFlag8BitBuffer; }
+#pragma warning(pop)
 
     // FIXME: Remove all unnecessary usages of characters()
     ALWAYS_INLINE const LChar* characters8() const { ASSERT(is8Bit()); return m_data8; }
@@ -313,9 +322,16 @@ public:
         return m_length;
     }
 
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool has16BitShadow() const { return m_hashAndFlags & s_hashFlagHas16BitShadow; }
+#pragma warning(pop)
     WTF_EXPORT_PRIVATE void upconvertCharacters(unsigned, unsigned) const;
+
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool isIdentifier() const { return m_hashAndFlags & s_hashFlagIsIdentifier; }
+#pragma warning(pop)
     void setIsIdentifier(bool isIdentifier)
     {
         ASSERT(!isStatic());
@@ -325,9 +341,12 @@ public:
             m_hashAndFlags &= ~s_hashFlagIsIdentifier;
     }
 
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool hasTerminatingNullCharacter() const { return m_hashAndFlags & s_hashFlagHasTerminatingNullCharacter; }
 
     bool isAtomic() const { return m_hashAndFlags & s_hashFlagIsAtomic; }
+#pragma warning(pop)
     void setIsAtomic(bool isIdentifier)
     {
         ASSERT(!isStatic());

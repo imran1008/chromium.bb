@@ -63,7 +63,10 @@ public:
     bool isSecureTransitionTo(const KURL&) const;
 
     void enforceSandboxFlags(SandboxFlags mask) { m_sandboxFlags |= mask; }
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool isSandboxed(SandboxFlags mask) const { return m_sandboxFlags & mask; }
+#pragma warning(pop)
 
     static SandboxFlags parseSandboxPolicy(const String& policy);
 

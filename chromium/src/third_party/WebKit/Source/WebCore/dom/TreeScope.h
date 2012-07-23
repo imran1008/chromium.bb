@@ -60,7 +60,10 @@ public:
 
     void addNodeListCache() { ++m_numNodeListCaches; }
     void removeNodeListCache() { ASSERT(m_numNodeListCaches > 0); --m_numNodeListCaches; }
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool hasNodeListCaches() const { return m_numNodeListCaches; }
+#pragma warning(pop)
 
     // Find first anchor with the given name.
     // First searches for an element with the given ID, but if that fails, then looks

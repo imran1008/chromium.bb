@@ -70,8 +70,11 @@ public:
     FractionalLayoutUnit(int value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value * kFixedPointDenominator; }
     FractionalLayoutUnit(unsigned short value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value * kFixedPointDenominator; }
     FractionalLayoutUnit(unsigned int value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value * kFixedPointDenominator; }
+#pragma warning(push)
+#pragma warning(disable:4244)
     FractionalLayoutUnit(float value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value * kFixedPointDenominator; }
     FractionalLayoutUnit(double value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value * kFixedPointDenominator; }
+#pragma warning(pop)
     FractionalLayoutUnit(const FractionalLayoutUnit& value) { m_value = value.rawValue(); }
 
     inline int toInt() const { return m_value / kFixedPointDenominator; }
@@ -83,7 +86,10 @@ public:
     operator unsigned() const { return toUnsigned(); }
     operator float() const { return toFloat(); }
     operator double() const { return toDouble(); }
+#pragma warning(push)
+#pragma warning(disable:4800)
     operator bool() const { return m_value; }
+#pragma warning(pop)
 
     inline FractionalLayoutUnit operator++(int)
     {
