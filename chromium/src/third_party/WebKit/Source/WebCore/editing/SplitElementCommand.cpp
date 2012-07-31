@@ -44,7 +44,7 @@ SplitElementCommand::SplitElementCommand(PassRefPtr<Element> element, PassRefPtr
 
 void SplitElementCommand::executeApply()
 {
-    if (m_atChild->parentNode() != m_element2 || m_element2->firstChild() == m_atChild)
+    if (m_atChild->parentNode() != m_element2)
         return;
     
     Vector<RefPtr<Node> > children;
