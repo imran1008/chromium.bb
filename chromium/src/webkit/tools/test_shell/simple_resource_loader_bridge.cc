@@ -1113,6 +1113,11 @@ scoped_refptr<base::MessageLoopProxy>
 }
 
 // static
+TestShellRequestContext* SimpleResourceLoaderBridge::GetUrlRequestContext() {
+    return g_request_context;
+}
+
+// static
 void SimpleResourceLoaderBridge::AllowFileOverHTTP(
     const std::string& file_path_template, const GURL& http_prefix) {
   DCHECK(!file_path_template.empty());

@@ -9,6 +9,7 @@
 #include "base/message_loop_proxy.h"
 #include "net/http/http_cache.h"
 #include "webkit/glue/resource_loader_bridge.h"
+#include "webkit/tools/test_shell/test_shell_request_context.h"
 
 class FilePath;
 class GURL;
@@ -42,6 +43,7 @@ class SimpleResourceLoaderBridge {
   // Init(), and destroyed upon a call to ShutDown().
   static scoped_refptr<base::MessageLoopProxy> GetCacheThread();
   static scoped_refptr<base::MessageLoopProxy> GetIoThread();
+  static TestShellRequestContext* GetUrlRequestContext();
 
   // Call this function to set up whether using file-over-http feature.
   // |file_over_http| indicates whether using file-over-http or not.
