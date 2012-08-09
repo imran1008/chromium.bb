@@ -23,6 +23,7 @@
 #if ENABLE(SVG)
 #include "Image.h"
 #include "IntSize.h"
+#include "FloatSize.h"
 #include "Timer.h"
 #include <wtf/HashMap.h>
 #include <wtf/PassOwnPtr.h>
@@ -47,11 +48,11 @@ public:
     struct SizeAndScales {
         SizeAndScales()
             : zoom(1)
-            , scale(1)
+            , scale(1, 1)
         {
         }
 
-        SizeAndScales(const IntSize& newSize, float newZoom, float newScale)
+        SizeAndScales(const IntSize& newSize, float newZoom, const FloatSize& newScale)
             : size(newSize)
             , zoom(newZoom)
             , scale(newScale)
@@ -60,7 +61,7 @@ public:
 
         IntSize size;
         float zoom;
-        float scale;
+        FloatSize scale;
     };
 
     void removeRendererFromCache(const RenderObject*);

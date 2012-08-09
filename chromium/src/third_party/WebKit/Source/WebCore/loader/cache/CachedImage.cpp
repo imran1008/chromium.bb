@@ -24,6 +24,11 @@
 #include "config.h"
 #include "CachedImage.h"
 
+// SHEZ: not sure if these two are needed, but add them just in case
+#include "TransformationMatrix.h"
+#include "LayoutTypes.h"
+#include "RenderBox.h"
+
 #include "BitmapImage.h"
 #include "MemoryCache.h"
 #include "CachedResourceClient.h"
@@ -195,6 +200,27 @@ Image* CachedImage::imageForRenderer(const RenderObject* renderer)
     return Image::nullImage();
 }
 
+// SHEZ: helper function.  there's probably a better way to do this
+static void GetTransformMatrix(TransformationMatrix* output, const RenderObject* renderer)
+{
+    output->makeIdentity();
+
+    while (renderer) {
+        RenderStyle* style = renderer->style();
+        if (renderer->style()->hasTransform()) {
+            TransformationMatrix localTrans;
+            LayoutSize boundingBox;
+            if (renderer->isBox()) {
+                boundingBox = toRenderBox(renderer)->size();
+            }
+            renderer->style()->applyTransform(localTrans, boundingBox);
+            *output = localTrans * (*output);
+        }
+
+        renderer = renderer->parent();
+    }
+}
+
 void CachedImage::setContainerSizeForRenderer(const RenderObject* renderer, const IntSize& containerSize, float containerZoom)
 {
     if (!m_image || containerSize.isEmpty())
@@ -206,7 +232,19 @@ void CachedImage::setContainerSizeForRenderer(const RenderObject* renderer, cons
     }
 
     // FIXME (85335): This needs to take CSS transform scale into account as well.
-    float containerScale = renderer->document()->page()->deviceScaleFactor() * renderer->document()->page()->pageScaleFactor();
+    FloatSize containerScale(1,1);
+    containerScale.scale(renderer->document()->page()->deviceScaleFactor() * renderer->document()->page()->pageScaleFactor());
+
+    // SHEZ: take css transform scale into account.  there's probably a better way to do this
+    if (!containerSize.isEmpty()) {
+        TransformationMatrix transform;
+        GetTransformMatrix(&transform, renderer);
+        FloatSize fsize = containerSize;
+        FloatRect rc = transform.mapRect(FloatRect(FloatPoint(), fsize));
+        float sx = rc.width() / fsize.width();
+        float sy = rc.height() / fsize.height();
+        containerScale.scale(sx,sy);
+    }
 
     m_svgImageCache->setRequestedSizeAndScales(renderer, SVGImageCache::SizeAndScales(containerSize, containerZoom, containerScale));
 #else
