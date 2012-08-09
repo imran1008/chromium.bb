@@ -678,18 +678,12 @@ void RenderInline::culledInlineAbsoluteQuads(const RenderInline* container, Vect
 
 LayoutUnit RenderInline::offsetLeft() const
 {
-    LayoutUnit x = RenderBoxModelObject::offsetLeft();
-    if (InlineBox* firstBox = firstLineBoxIncludingCulling())
-        x += firstBox->x();
-    return x;
+    return RenderBoxModelObject::offsetLeft();
 }
 
 LayoutUnit RenderInline::offsetTop() const
 {
-    LayoutUnit y = RenderBoxModelObject::offsetTop();
-    if (InlineBox* firstBox = firstLineBoxIncludingCulling())
-        y += firstBox->y();
-    return y;
+    return RenderBoxModelObject::offsetTop();
 }
 
 static LayoutUnit computeMargin(const RenderInline* renderer, const Length& margin)
