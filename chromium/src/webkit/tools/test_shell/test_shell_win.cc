@@ -27,6 +27,7 @@
 #include "net/url_request/url_request_file_job.h"
 #include "skia/ext/bitmap_platform_device.h"
 #include "third_party/WebKit/Source/WebKit/chromium/public/WebFrame.h"
+#include "third_party/WebKit/Source/WebKit/chromium/public/WebPrintParams.h"
 #include "third_party/WebKit/Source/WebKit/chromium/public/WebView.h"
 #include "ui/base/win/hwnd_util.h"
 #include "webkit/glue/webkit_glue.h"
@@ -234,7 +235,9 @@ PrintBegin(WebKit::WebFrame* printFrame,
     const double widthPoints = (widthInches - hMarginInches) * pointsPerInch ;
     const double heightPoints = (heightInches - vMarginInches) * pointsPerInch;
     WebKit::WebSize size(widthPoints, heightPoints);
-    *pages = printFrame->printBegin(size, WebKit::WebNode(), *printDpi);
+    WebKit::WebPrintParams params(size);
+    params.printerDPI = *printDpi;
+    *pages = printFrame->printBegin(params, WebKit::WebNode());
     return TRUE;
 }
 
