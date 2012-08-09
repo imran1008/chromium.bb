@@ -23,6 +23,7 @@
 #if ENABLE(SVG)
 #include "Image.h"
 #include "IntSize.h"
+#include "FloatSize.h"
 #include "Timer.h"
 #include <wtf/HashMap.h>
 #include <wtf/PassOwnPtr.h>
@@ -44,26 +45,29 @@ public:
         return adoptPtr(new SVGImageCache(image));
     }
 
-    struct SizeAndZoom {
-        SizeAndZoom()
+    struct SizeAndScales {
+        SizeAndScales()
             : zoom(1)
+            , scale(1, 1)
         {
         }
 
-        SizeAndZoom(const IntSize& newSize, float newZoom)
+        SizeAndScales(const IntSize& newSize, float newZoom, const FloatSize& newScale)
             : size(newSize)
             , zoom(newZoom)
+            , scale(newScale)
         {
         }
 
         IntSize size;
         float zoom;
+        FloatSize scale;
     };
 
     void removeRendererFromCache(const RenderObject*);
 
-    void setRequestedSizeAndZoom(const RenderObject*, const SizeAndZoom&);
-    SizeAndZoom requestedSizeAndZoom(const RenderObject*) const;
+    void setRequestedSizeAndScales(const RenderObject*, const SizeAndScales&);
+    SizeAndScales requestedSizeAndScales(const RenderObject*) const;
 
     Image* lookupOrCreateBitmapImageForRenderer(const RenderObject*);
     void imageContentChanged();
@@ -80,26 +84,26 @@ private:
         {
         }
 
-        ImageData(ImageBuffer* newBuffer, PassRefPtr<Image> newImage, const SizeAndZoom& newSizeAndZoom)
+        ImageData(ImageBuffer* newBuffer, PassRefPtr<Image> newImage, const SizeAndScales& newSizeAndScales)
             : imageNeedsUpdate(false)
-            , sizeAndZoom(newSizeAndZoom)
+            , sizeAndScales(newSizeAndScales)
             , buffer(newBuffer)
             , image(newImage)
         {
         }
 
         bool imageNeedsUpdate;
-        SizeAndZoom sizeAndZoom;
+        SizeAndScales sizeAndScales;
 
         ImageBuffer* buffer;
         RefPtr<Image> image;
     };
 
-    typedef HashMap<const RenderObject*, SizeAndZoom> SizeAndZoomMap;
+    typedef HashMap<const RenderObject*, SizeAndScales> SizeAndScalesMap;
     typedef HashMap<const RenderObject*, ImageData> ImageDataMap;
 
     SVGImage* m_svgImage;
-    SizeAndZoomMap m_sizeAndZoomMap;
+    SizeAndScalesMap m_sizeAndScalesMap;
     ImageDataMap m_imageDataMap;
     Timer<SVGImageCache> m_redrawTimer;
 };
