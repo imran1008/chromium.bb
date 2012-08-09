@@ -165,9 +165,11 @@ private:
 
 #undef UNLESS_ENABLED
 
+#define BLOOMBERG_REMOVE_MARKERS_FIX 1
+
 inline bool AlternativeTextController::shouldRemoveMarkersUponEditing()
 {
-#if USE(MARKER_REMOVAL_UPON_EDITING)
+#if USE(MARKER_REMOVAL_UPON_EDITING) || BLOOMBERG_REMOVE_MARKERS_FIX
     return true;
 #else
     return false;
