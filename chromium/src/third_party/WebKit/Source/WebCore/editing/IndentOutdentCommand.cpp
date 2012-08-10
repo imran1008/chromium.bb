@@ -295,10 +295,31 @@ void IndentOutdentCommand::formatRange(const Position& start, const Position& en
             }
         }
 
-        if (m_typeOfAction == Outdent) {
-            outdentRegion(start, end);
-            return;
+        VisiblePosition startOfCurrentParagraph = startOfParagraph(start);
+        VisiblePosition endOfCurrentParagraph = endOfParagraph(start);
+        VisiblePosition endOfLastParagraph = endOfParagraph(end);
+
+        while (true) {
+            VisiblePosition startOfNextParagraph = endOfCurrentParagraph.next();
+
+            if (m_typeOfAction == Outdent) {
+                outdentRegion(startOfCurrentParagraph, endOfCurrentParagraph);
+            }
+            else {
+                if (tryIndentingAsListItem(startOfCurrentParagraph.deepEquivalent(), endOfCurrentParagraph.deepEquivalent()))
+                    blockquoteForNextIndent = 0;
+                else
+                    indentIntoBlockquote(startOfCurrentParagraph.deepEquivalent(), endOfCurrentParagraph.deepEquivalent(), blockquoteForNextIndent);
+            }
+
+            if (endOfCurrentParagraph == endOfLastParagraph) {
+                break;
+            }
+            startOfCurrentParagraph = startOfNextParagraph;
+            endOfCurrentParagraph = endOfParagraph(startOfCurrentParagraph);
         }
+
+        return;
     }
 
     if (tryIndentingAsListItem(start, end))
