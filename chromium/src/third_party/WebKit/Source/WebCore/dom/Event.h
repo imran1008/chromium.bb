@@ -149,7 +149,10 @@ namespace WebCore {
 
         virtual Clipboard* clipboard() const { return 0; }
 
+#pragma warning(push)
+#pragma warning(disable:4800)
         bool isBeingDispatched() const { return eventPhase(); }
+#pragma warning(pop)
 
     protected:
         Event();

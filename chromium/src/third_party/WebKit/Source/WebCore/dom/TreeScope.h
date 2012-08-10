@@ -63,7 +63,10 @@ public:
 
     void addNodeListCache() { ++m_numNodeListCaches; }
     void removeNodeListCache() { ASSERT(m_numNodeListCaches > 0); --m_numNodeListCaches; }
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool hasNodeListCaches() const { return m_numNodeListCaches; }
+#pragma warning(pop)
 
     DOMSelection* getSelection() const;
 

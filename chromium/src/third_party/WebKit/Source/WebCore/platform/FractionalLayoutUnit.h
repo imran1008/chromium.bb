@@ -70,6 +70,8 @@ public:
     // However due to compiler and platform differences adding those are non-trivial.
     // See https://bugs.webkit.org/show_bug.cgi?id=83848 for details.
     
+#pragma warning(push)
+#pragma warning(disable:4244)
     FractionalLayoutUnit() : m_value(0) { }
 #if ENABLE(SUBPIXEL_LAYOUT)
     FractionalLayoutUnit(int value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value * kFixedPointDenominator; }
@@ -85,6 +87,7 @@ public:
     FractionalLayoutUnit(double value) { REPORT_OVERFLOW(isInBounds(value)); m_value = value; }
 #endif
     FractionalLayoutUnit(const FractionalLayoutUnit& value) { m_value = value.rawValue(); }
+#pragma warning(pop)
 
 #if ENABLE(SUBPIXEL_LAYOUT)
     int toInt() const { return m_value / kFixedPointDenominator; }
@@ -101,7 +104,10 @@ public:
     operator unsigned() const { return toUnsigned(); }
     operator float() const { return toFloat(); }
     operator double() const { return toDouble(); }
+#pragma warning(push)
+#pragma warning(disable:4800)
     operator bool() const { return m_value; }
+#pragma warning(pop)
 
     FractionalLayoutUnit operator++(int)
     {

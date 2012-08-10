@@ -44,6 +44,8 @@ public:
     {
     }
 
+#pragma warning(push)
+#pragma warning(disable:4800)
     bool readOnly() const { return m_requestType & ReadOnly; }
     bool active() const { return m_requestType & Active; }
     bool move() const { return m_requestType & Move; }
@@ -51,6 +53,7 @@ public:
     bool ignoreClipping() const { return m_requestType & IgnoreClipping; }
     bool svgClipContent() const { return m_requestType & SVGClipContent; }
     bool touchEvent() const { return m_requestType & TouchEvent; }
+#pragma warning(pop)
     bool mouseEvent() const { return !touchEvent(); }
 
     // Convenience functions
