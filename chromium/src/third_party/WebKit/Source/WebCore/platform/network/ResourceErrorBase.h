@@ -46,7 +46,7 @@ public:
     const String& failingURL() const { lazyInit(); return m_failingURL; }
     const String& localizedDescription() const { lazyInit(); return m_localizedDescription; }
 
-    void setIsCancellation(bool isCancellation) { m_isCancellation = isCancellation; }
+    void setIsCancellation(bool isCancellation) { m_isCancellation = isCancellation; m_isNull = false;}
     bool isCancellation() const { return m_isCancellation; }
 
     static bool compare(const ResourceError&, const ResourceError&);

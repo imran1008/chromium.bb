@@ -61,7 +61,11 @@ WebURLError& WebURLError::operator=(const ResourceError& error)
 WebURLError::operator ResourceError() const
 {
     if (!reason)
-        return ResourceError();
+    {
+        ResourceError noReasonError = ResourceError();
+        noReasonError.setIsCancellation(isCancellation);
+        return noReasonError;
+    }
     CString spec = unreachableURL.spec();
     ResourceError resourceError = ResourceError(domain, reason,
                                                 String::fromUTF8(spec.data(),
