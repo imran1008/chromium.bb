@@ -882,7 +882,7 @@ PassRefPtr<DocumentFragment> createFragmentFromText(Range* context, const String
         && !block->hasTagName(bodyTag)
         && !block->hasTagName(htmlTag)
         && block != editableRootForPosition(context->startPosition());
-    bool useLineBreak = enclosingTextFormControl(context->startPosition());
+    bool useLineBreak = true;//enclosingTextFormControl(context->startPosition());
 
     Vector<String> list;
     string.split('\n', true, list); // true gets us empty strings in the list
