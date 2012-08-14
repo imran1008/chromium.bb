@@ -218,7 +218,7 @@ void RenderTableRow::paintOutlineForRowIfNeeded(PaintInfo& paintInfo, const Layo
 {
     PaintPhase paintPhase = paintInfo.phase;
     if ((paintPhase == PaintPhaseOutline || paintPhase == PaintPhaseSelfOutline) && style()->visibility() == VISIBLE)
-        paintOutline(paintInfo.context, LayoutRect(paintOffset, size()));
+        paintOutline(paintInfo.context, LayoutRect(paintOffset + location(), size()));
 }
 
 void RenderTableRow::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
