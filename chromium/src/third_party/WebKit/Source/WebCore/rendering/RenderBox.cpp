@@ -1661,6 +1661,11 @@ void RenderBox::computeLogicalWidthInRegion(RenderRegion* region, LayoutUnit off
     // https://bugs.webkit.org/show_bug.cgi?id=46418
     bool inVerticalBox = parent()->isDeprecatedFlexibleBox() && (parent()->style()->boxOrient() == VERTICAL);
     bool stretching = (parent()->style()->boxAlign() == BSTRETCH);
+    if (parent()->isFlexibleBox()) {
+        RenderFlexibleBox* flexBox = static_cast<RenderFlexibleBox*>(parent());
+        inVerticalBox = !flexBox->isHorizontalFlow();
+        stretching = flexBox->alignmentForChild(this) == AlignStretch;
+    }
     bool treatAsReplaced = shouldComputeSizeAsReplaced() && (!inVerticalBox || !stretching);
 
     RenderStyle* styleToUse = style();
@@ -1976,6 +1981,11 @@ void RenderBox::computeLogicalHeight()
         // https://bugs.webkit.org/show_bug.cgi?id=46418
         bool inHorizontalBox = parent()->isDeprecatedFlexibleBox() && parent()->style()->boxOrient() == HORIZONTAL;
         bool stretching = parent()->style()->boxAlign() == BSTRETCH;
+        if (parent()->isFlexibleBox()) {
+            RenderFlexibleBox* flexBox = static_cast<RenderFlexibleBox*>(parent());
+            inHorizontalBox = flexBox->isHorizontalFlow();
+            stretching = flexBox->alignmentForChild(this) == AlignStretch;
+        }
         bool treatAsReplaced = shouldComputeSizeAsReplaced() && (!inHorizontalBox || !stretching);
         bool checkMinMaxHeight = false;
 

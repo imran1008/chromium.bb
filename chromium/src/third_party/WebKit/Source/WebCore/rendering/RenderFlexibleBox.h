@@ -47,6 +47,7 @@ public:
     virtual void layoutBlock(bool relayoutChildren, LayoutUnit pageLogicalHeight = 0);
 
     bool isHorizontalFlow() const;
+    EAlignItems alignmentForChild(RenderBox* child) const;
 
 private:
     enum FlexSign {

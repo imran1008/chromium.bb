@@ -942,7 +942,7 @@ void RenderFlexibleBox::prepareChildForPositionedLayout(RenderBox* child, Layout
     }
 }
 
-static EAlignItems alignmentForChild(RenderBox* child)
+EAlignItems RenderFlexibleBox::alignmentForChild(RenderBox* child) const
 {
     EAlignItems align = child->style()->alignSelf();
     if (align == AlignAuto)
