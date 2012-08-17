@@ -285,6 +285,15 @@ String TextCheckingHelper::findFirstMisspelling(int& firstMisspellingOffset, boo
                 if (!markAll)
                     break;
             }
+#define BLOOMBERG_CONTRACTION_FIX 1
+#if BLOOMBERG_CONTRACTION_FIX
+            else {
+                RefPtr<Range> range = TextIterator::subrange(m_range.get(), currentChunkOffset, len);
+                ExceptionCode ec = 0;
+                range->startContainer(ec)->document()->markers()->removeMarkers(range.get(), DocumentMarker::Spelling);
+                ASSERT(!ec);
+            }
+#endif
         }
         
         currentChunkOffset += len;
