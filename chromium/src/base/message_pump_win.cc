@@ -109,8 +109,18 @@ void MessagePumpForUI::ScheduleWork() {
     return;  // Someone else continued the pumping.
 
   // Make sure the MessagePump does some work for us.
-  BOOL ret = PostMessage(message_hwnd_, kMsgHaveWork,
+  BOOL ret = true;
+  
+  // Make sure we do not insert a have-work message when we are in the modal loop.
+  // Since the input messages are given a lower priorty compared to the posted messages
+  // (http://msdn.microsoft.com/en-us/library/windows/desktop/ms644936(v=vs.85).aspx),
+  // we may never process the input message to escape out of the modal loop if there is
+  // always a posted message in the queue.
+  if (!MessageLoop::current()->os_modal_loop()) {
+      ret = PostMessage(message_hwnd_, kMsgHaveWork,
                          reinterpret_cast<WPARAM>(this), 0);
+  }
+
   if (ret)
     return;  // There was room in the Window Message queue.
 
