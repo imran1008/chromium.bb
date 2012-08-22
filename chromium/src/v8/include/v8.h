@@ -2723,7 +2723,6 @@ class V8EXPORT HeapStatistics {
   friend class V8;
 };
 
-#ifdef DEBUG
 // Sizes are in Bytes
 struct V8EXPORT VirtualAllocStatistics {
  public:
@@ -2742,7 +2741,6 @@ struct V8EXPORT VirtualAllocStatistics {
   size_t duplicate_reserved;
   size_t alloc_errors;
 };
-#endif //DEBUG
 
 class RetainedObjectInfo;
 
@@ -3306,12 +3304,10 @@ class V8EXPORT V8 {
    */
   static int ContextDisposedNotification();
 
-  #ifdef DEBUG
   /**
    * Get statistics about the VirtualAlloc memory usage.
    */
   static const VirtualAllocStatistics& GetVirtualAllocStatistics();
-  #endif
 
  private:
   V8();

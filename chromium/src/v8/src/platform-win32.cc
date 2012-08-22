@@ -133,17 +133,14 @@ int random() {
   return rand();
 }
 
-#ifdef DEBUG
 typedef std::map<void*, unsigned int> VAMap;
 
 static VAMap va_map_reserved;
 static VAMap va_map_committed;
 static v8::VirtualAllocStatistics va_statistics;
 
-#endif
-
 namespace v8 {
-#ifdef DEBUG
+
 VirtualAllocStatistics::VirtualAllocStatistics()
 : reserved(0)
 , committed(0)
@@ -164,7 +161,7 @@ const VirtualAllocStatistics& V8::GetVirtualAllocStatistics() {
   va_statistics.outstanding_committed = va_map_committed.size();
   return va_statistics;
 }
-#endif
+
 
 namespace internal {
 
@@ -940,7 +937,6 @@ static unsigned int roundup(int size)
     return ((size + 65535) / 65536) * 65536;
 }
 
-#ifdef DEBUG
 static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
                                     SIZE_T dwSize,
                                     DWORD flAllocationType,
@@ -1022,7 +1018,6 @@ BOOL MonitoredVirtualFree(LPVOID lpAddress,
 
     return res;
 }
-#endif
 
 static void* RandomizedVirtualAlloc(size_t size, int action, int protection) {
   LPVOID base = NULL;
@@ -1030,20 +1025,12 @@ static void* RandomizedVirtualAlloc(size_t size, int action, int protection) {
   if (protection == PAGE_EXECUTE_READWRITE || protection == PAGE_NOACCESS) {
     // For exectutable pages try and randomize the allocation address
     for (size_t attempts = 0; base == NULL && attempts < 3; ++attempts) {
-#ifdef DEBUG
       base = MonitoredVirtualAlloc(GetRandomAddr(), size, action, protection);
-#else
-      base = VirtualAlloc(GetRandomAddr(), size, action, protection);
-#endif
     }
   }
 
   // After three attempts give up and let the OS find an address to use.
-#ifdef DEBUG
   if (base == NULL) base = MonitoredVirtualAlloc(NULL, size, action, protection);
-#else
-  if (base == NULL) base = VirtualAlloc(NULL, size, action, protection);
-#endif
   return base;
 }
 
@@ -1076,11 +1063,7 @@ void* OS::Allocate(const size_t requested,
 
 void OS::Free(void* address, const size_t size) {
   // TODO(1240712): VirtualFree has a return value which is ignored here.
-#ifdef DEBUG
   MonitoredVirtualFree(address, 0, MEM_RELEASE);
-#else
-  VirtualFree(address, 0, MEM_RELEASE);
-#endif
   USE(size);
 }
 
@@ -1613,11 +1596,9 @@ VirtualMemory::VirtualMemory(size_t size, size_t alignment)
   bool result = ReleaseRegion(address, request_size);
   USE(result);
   ASSERT(result);
-#ifdef DEBUG
+
   address = MonitoredVirtualAlloc(base, size, MEM_RESERVE, PAGE_NOACCESS);
-#else
-  address = VirtualAlloc(base, size, MEM_RESERVE, PAGE_NOACCESS);
-#endif
+
   if (address != NULL) {
     request_size = size;
     ASSERT(base == static_cast<Address>(address));
@@ -1673,11 +1654,8 @@ void* VirtualMemory::ReserveRegion(size_t size) {
 
 bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
   int prot = is_executable ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
-#ifdef DEBUG
+
   if (NULL == MonitoredVirtualAlloc(base, size, MEM_COMMIT, prot)) {
-#else
-  if (NULL == VirtualAlloc(base, size, MEM_COMMIT, prot)) {
-#endif
     return false;
   }
 
@@ -1687,11 +1665,7 @@ bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
 
 
 bool VirtualMemory::Guard(void* address) {
-#ifdef DEBUG
   if (NULL == MonitoredVirtualAlloc(address,
-#else
-  if (NULL == VirtualAlloc(address,
-#endif
                            OS::CommitPageSize(),
                            MEM_COMMIT,
                            PAGE_READONLY | PAGE_GUARD)) {
@@ -1702,20 +1676,12 @@ bool VirtualMemory::Guard(void* address) {
 
 
 bool VirtualMemory::UncommitRegion(void* base, size_t size) {
-#ifdef DEBUG
   return MonitoredVirtualFree(base, size, MEM_DECOMMIT) != 0;
-#else
-  return VirtualFree(base, size, MEM_DECOMMIT) != 0;
-#endif
 }
 
 
 bool VirtualMemory::ReleaseRegion(void* base, size_t size) {
-#ifdef DEBUG
   return MonitoredVirtualFree(base, 0, MEM_RELEASE) != 0;
-#else
-  return VirtualFree(base, 0, MEM_RELEASE) != 0;
-#endif
 }
 
 
