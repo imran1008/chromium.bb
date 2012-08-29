@@ -40,6 +40,8 @@
 #include "TransformationMatrix.h"
 #include <wtf/HashSet.h>
 #include <wtf/UnusedParam.h>
+#include <wtf/CurrentTime.h>
+#include <vector>
 
 namespace WebCore {
 
@@ -125,6 +127,46 @@ struct DashboardRegionValue {
     int type;
 };
 #endif
+
+struct LayoutTimeStamp {
+    RenderObject *current;
+    RenderObject *parent;
+    String        tag;
+    String        id;
+    const char*   renderName;
+    double        duration;
+
+    LayoutTimeStamp(RenderObject *current, RenderObject *parent,
+                    String tag, String id, const char* renderName,
+                    double duration)
+                    : current(current)
+                    , parent(parent)
+                    , tag(tag)
+                    , id(id)
+                    , renderName(renderName)
+                    , duration(duration)
+    {}
+};
+
+extern std::vector<LayoutTimeStamp*> *g_layoutTimeStamp;
+
+#define RENDER_OBJECT_LAYOUT_DEBUG_START                       \
+        double ___startTime = 0;                               \
+        if (g_layoutTimeStamp) {                               \
+            ___startTime = WTF::monotonicallyIncreasingTime(); \
+        }
+
+#define RENDER_OBJECT_LAYOUT_DEBUG_END \
+        if (g_layoutTimeStamp) { \
+            double duration = WTF::monotonicallyIncreasingTime() - ___startTime; \
+            Element *elem = static_cast<Element *>(node()); \
+            ElementAttributeData *data = elem->attributeData(); \
+            g_layoutTimeStamp->push_back( \
+                    new LayoutTimeStamp( \
+                        this, parent(), node()->nodeName(), \
+                        data->hasID() ? data->idForStyleResolution().string() : "<NULL>", \
+                        renderName(), duration)); \
+        }
 
 typedef WTF::HashSet<const RenderObject*> RenderObjectAncestorLineboxDirtySet;
 

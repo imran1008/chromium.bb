@@ -66,6 +66,11 @@ void RemoveSharedMemoryFile(std::string& filename) {
 
 }  // namespace
 
+namespace WebCore {
+    struct LayoutTimeStamp;
+    std::vector<LayoutTimeStamp*> *g_layoutTimeStamp = NULL;
+}
+
 int main(int argc, char* argv[]) {
   base::EnableInProcessStackDumping();
   base::EnableTerminationOnHeapCorruption();
