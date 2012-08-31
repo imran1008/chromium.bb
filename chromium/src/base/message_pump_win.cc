@@ -116,7 +116,7 @@ void MessagePumpForUI::ScheduleWork() {
   // (http://msdn.microsoft.com/en-us/library/windows/desktop/ms644936(v=vs.85).aspx),
   // we may never process the input message to escape out of the modal loop if there is
   // always a posted message in the queue.
-  if (!MessageLoop::current()->os_modal_loop()) {
+  if (!MessageLoop::current() || !MessageLoop::current()->os_modal_loop()) {
       ret = PostMessage(message_hwnd_, kMsgHaveWork,
                          reinterpret_cast<WPARAM>(this), 0);
   }
