@@ -1303,7 +1303,9 @@ void RenderListMarker::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffse
 void RenderListMarker::layout()
 {
     ASSERT(needsLayout());
- 
+
+    RENDER_OBJECT_LAYOUT_DEBUG_START; 
+
     if (isImage()) {
         setWidth(m_image->imageSize(this, style()->effectiveZoom()).width());
         setHeight(m_image->imageSize(this, style()->effectiveZoom()).height());
@@ -1323,6 +1325,7 @@ void RenderListMarker::layout()
         setMarginEnd(endMargin.value());
 
     setNeedsLayout(false);
+    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderListMarker::imageChanged(WrappedImagePtr o, const IntRect*)

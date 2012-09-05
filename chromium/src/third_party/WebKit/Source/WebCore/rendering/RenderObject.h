@@ -149,6 +149,8 @@ struct LayoutTimeStamp {
 };
 
 extern std::vector<LayoutTimeStamp*> *g_layoutTimeStamp;
+extern void (*g_startLayoutDebugFunc)(void);
+extern void (*g_endLayoutDebugFunc)(void);
 
 #define RENDER_OBJECT_LAYOUT_DEBUG_START                       \
         double ___startTime = 0;                               \
@@ -160,11 +162,11 @@ extern std::vector<LayoutTimeStamp*> *g_layoutTimeStamp;
         if (g_layoutTimeStamp) { \
             double duration = WTF::monotonicallyIncreasingTime() - ___startTime; \
             Element *elem = static_cast<Element *>(node()); \
-            ElementAttributeData *data = elem->attributeData(); \
+            ElementAttributeData *data = elem ? elem->attributeData() : NULL; \
             g_layoutTimeStamp->push_back( \
                     new LayoutTimeStamp( \
-                        this, parent(), node()->nodeName(), \
-                        data->hasID() ? data->idForStyleResolution().string() : "<NULL>", \
+                        this, parent(), isAnonymous() ? "<ANONYMOUS>" : node()->nodeName(), \
+                        data && data->hasID() ? data->idForStyleResolution().string() : "<NULL>", \
                         renderName(), duration)); \
         }
 

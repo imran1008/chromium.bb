@@ -35,8 +35,10 @@ RenderSVGHiddenContainer::RenderSVGHiddenContainer(SVGStyledElement* element)
 void RenderSVGHiddenContainer::layout()
 {
     ASSERT(needsLayout());
+    RENDER_OBJECT_LAYOUT_DEBUG_START;
     SVGRenderSupport::layoutChildren(this, selfNeedsLayout()); 
     setNeedsLayout(false);    
+    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderSVGHiddenContainer::paint(PaintInfo&, const LayoutPoint&)

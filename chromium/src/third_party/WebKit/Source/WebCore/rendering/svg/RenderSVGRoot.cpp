@@ -214,6 +214,8 @@ void RenderSVGRoot::layout()
 {
     ASSERT(needsLayout());
 
+    RENDER_OBJECT_LAYOUT_DEBUG_START;
+
     m_resourcesNeedingToInvalidateClients.clear();
 
     // Arbitrary affine transforms are incompatible with LayoutState.
@@ -251,6 +253,8 @@ void RenderSVGRoot::layout()
     repainter.repaintAfterLayout();
 
     setNeedsLayout(false);
+
+    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderSVGRoot::paintReplaced(PaintInfo& paintInfo, const LayoutPoint& paintOffset)

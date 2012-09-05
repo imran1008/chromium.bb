@@ -227,6 +227,8 @@ bool RenderEmbeddedObject::getReplacementTextGeometry(const LayoutPoint& accumul
 void RenderEmbeddedObject::layout()
 {
     ASSERT(needsLayout());
+    
+    RENDER_OBJECT_LAYOUT_DEBUG_START;
 
     computeLogicalWidth();
     computeLogicalHeight();
@@ -242,6 +244,7 @@ void RenderEmbeddedObject::layout()
         frameView()->addWidgetToUpdate(this);
 
     setNeedsLayout(false);
+    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderEmbeddedObject::viewCleared()

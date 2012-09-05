@@ -80,6 +80,7 @@ bool RenderSVGImage::updateImageViewport()
 void RenderSVGImage::layout()
 {
     ASSERT(needsLayout());
+    RENDER_OBJECT_LAYOUT_DEBUG_START;
 
     LayoutRepainter repainter(*this, checkForRepaintDuringLayout() && selfNeedsLayout());
     updateImageViewport();
@@ -106,6 +107,7 @@ void RenderSVGImage::layout()
 
     repainter.repaintAfterLayout();
     setNeedsLayout(false);
+    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderSVGImage::paint(PaintInfo& paintInfo, const LayoutPoint&)

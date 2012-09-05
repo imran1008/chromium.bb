@@ -55,6 +55,7 @@ void RenderSVGContainer::layout()
 
     // RenderSVGRoot disables layoutState for the SVG rendering tree.
     ASSERT(!view()->layoutStateEnabled());
+    RENDER_OBJECT_LAYOUT_DEBUG_START;
 
     LayoutRepainter repainter(*this, checkForRepaintDuringLayout() || selfWillPaint());
 
@@ -85,6 +86,8 @@ void RenderSVGContainer::layout()
 
     repainter.repaintAfterLayout();
     setNeedsLayout(false);
+
+    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderSVGContainer::addChild(RenderObject* child, RenderObject* beforeChild)

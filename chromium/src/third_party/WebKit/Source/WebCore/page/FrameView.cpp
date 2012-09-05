@@ -71,6 +71,7 @@
 #include <wtf/CurrentTime.h>
 #include <wtf/TemporaryChange.h>
 #include <wtf/UnusedParam.h>
+#include <iostream>
 
 #if USE(ACCELERATED_COMPOSITING)
 #include "RenderLayerCompositor.h"
@@ -131,6 +132,19 @@ static RenderLayer::UpdateLayerPositionsFlags updateLayerPositionFlags(RenderLay
         flags |= RenderLayer::UpdatePagination;
     return flags;
 }
+
+void printLayoutTimeStamp(std::wostream& os, WebCore::LayoutTimeStamp* item)
+{
+    os << item->current << L","
+       << item->tag.charactersWithNullTermination() << L","
+       << item->id.charactersWithNullTermination() << L","
+       << item->renderName << L","
+       << item->duration*1000 << L","
+       << item->parent << L'\n';
+
+    delete item;
+}
+
 
 FrameView::FrameView(Frame* frame)
     : m_frame(frame)
@@ -960,6 +974,13 @@ void FrameView::layout(bool allowSubtree)
 
     InspectorInstrumentationCookie cookie = InspectorInstrumentation::willLayout(m_frame.get());
 
+    if (g_layoutTimeStamp) {
+        g_layoutTimeStamp->push_back(
+            new LayoutTimeStamp(0, 0,
+                "--LAYOUT START--",
+                m_frame->document()->url().string(), "", 0));
+    }
+
     if (!allowSubtree && m_layoutRoot) {
         m_layoutRoot->markContainingBlocksForLayout(false);
         m_layoutRoot = 0;
@@ -1181,6 +1202,13 @@ void FrameView::layout(bool allowSubtree)
     }
 
     InspectorInstrumentation::didLayout(cookie);
+
+    if (g_layoutTimeStamp) {
+        g_layoutTimeStamp->push_back(
+            new LayoutTimeStamp(0, 0,
+                "--LAYOUT END--",
+                m_frame->document()->url().string(), "", 0));
+    }
 
     m_nestedLayoutCount--;
     if (m_nestedLayoutCount)
