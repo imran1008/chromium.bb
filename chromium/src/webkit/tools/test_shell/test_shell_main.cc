@@ -107,9 +107,10 @@ int main(int argc, char* argv[]) {
   base::EnableInProcessStackDumping();
   base::EnableTerminationOnHeapCorruption();
 
-  WebCore::g_startLayoutDebugFunc = &startLayoutDebug;
-  WebCore::g_endLayoutDebugFunc = &endLayoutDebug;
-
+  //NOTE: uncomment the following lines to enable layout profiling
+  //WebCore::g_startLayoutDebugFunc = &startLayoutDebug;
+  //WebCore::g_endLayoutDebugFunc = &endLayoutDebug;
+  
   // Some tests may use base::Singleton<>, thus we need to instanciate
   // the AtExitManager or else we will leak objects.
   base::AtExitManager at_exit_manager;
