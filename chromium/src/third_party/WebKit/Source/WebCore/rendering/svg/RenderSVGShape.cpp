@@ -166,7 +166,7 @@ bool RenderSVGShape::strokeContains(const FloatPoint& point, bool requiresStroke
 
 void RenderSVGShape::layout()
 {
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
     LayoutRepainter repainter(*this, checkForRepaintDuringLayout() && selfNeedsLayout());
     SVGStyledTransformableElement* element = static_cast<SVGStyledTransformableElement*>(node());
 
@@ -204,7 +204,6 @@ void RenderSVGShape::layout()
 
     repainter.repaintAfterLayout();
     setNeedsLayout(false);
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 Path* RenderSVGShape::nonScalingStrokePath(const Path* path, const AffineTransform& strokeTransform) const

@@ -1418,7 +1418,7 @@ void RenderBlock::layoutBlock(bool relayoutChildren, LayoutUnit pageLogicalHeigh
     if (!relayoutChildren && simplifiedLayout())
         return;
 
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
 
     LayoutRepainter repainter(*this, everHadLayout() && checkForRepaintDuringLayout());
 
@@ -1583,8 +1583,6 @@ void RenderBlock::layoutBlock(bool relayoutChildren, LayoutUnit pageLogicalHeigh
     }
     
     setNeedsLayout(false);
-
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderBlock::addOverflowFromChildren()

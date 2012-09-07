@@ -140,7 +140,7 @@ void RenderTableRow::layout()
 {
     ASSERT(needsLayout());
 
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
 
     // Table rows do not add translation.
     LayoutStateMaintainer statePusher(view(), this, LayoutSize(), style()->isFlippedBlocksWritingMode());
@@ -175,8 +175,6 @@ void RenderTableRow::layout()
     statePusher.pop();
     // RenderTableSection::layoutRows will set our logical height and width later, so it calls updateLayerTransform().
     setNeedsLayout(false);
-
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 LayoutRect RenderTableRow::clippedOverflowRectForRepaint(RenderBoxModelObject* repaintContainer) const

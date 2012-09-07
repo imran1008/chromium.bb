@@ -406,7 +406,7 @@ void RenderTableSection::layout()
     ASSERT(!needsCellRecalc());
     ASSERT(!table()->needsSectionRecalc());
 
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
 
     LayoutStateMaintainer statePusher(view(), this, locationOffset(), style()->isFlippedBlocksWritingMode());
     for (RenderObject* child = children()->firstChild(); child; child = child->nextSibling()) {
@@ -417,8 +417,6 @@ void RenderTableSection::layout()
     }
     statePusher.pop();
     setNeedsLayout(false);
-
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderTableSection::distributeExtraLogicalHeightToPercentRows(int& extraLogicalHeight, int totalPercent)

@@ -148,27 +148,19 @@ struct LayoutTimeStamp {
     {}
 };
 
+class LayoutTimeStampScope {
+    LayoutTimeStamp* d_item;
+    double           d_startTime;
+public:
+    LayoutTimeStampScope(RenderObject *item);
+    ~LayoutTimeStampScope();
+};
+
 extern std::vector<LayoutTimeStamp*> *g_layoutTimeStamp;
 extern void (*g_startLayoutDebugFunc)(void);
 extern void (*g_endLayoutDebugFunc)(void);
 
-#define RENDER_OBJECT_LAYOUT_DEBUG_START                       \
-        double ___startTime = 0;                               \
-        if (g_layoutTimeStamp) {                               \
-            ___startTime = WTF::monotonicallyIncreasingTime(); \
-        }
 
-#define RENDER_OBJECT_LAYOUT_DEBUG_END \
-        if (g_layoutTimeStamp) { \
-            double duration = WTF::monotonicallyIncreasingTime() - ___startTime; \
-            Element *elem = static_cast<Element *>(node()); \
-            ElementAttributeData *data = elem ? elem->attributeData() : NULL; \
-            g_layoutTimeStamp->push_back( \
-                    new LayoutTimeStamp( \
-                        this, parent(), isAnonymous() ? "<ANONYMOUS>" : node()->nodeName(), \
-                        data && data->hasID() ? data->idForStyleResolution().string() : "<NULL>", \
-                        renderName(), duration)); \
-        }
 
 typedef WTF::HashSet<const RenderObject*> RenderObjectAncestorLineboxDirtySet;
 

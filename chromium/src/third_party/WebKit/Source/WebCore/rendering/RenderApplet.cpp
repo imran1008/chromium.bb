@@ -82,7 +82,7 @@ void RenderApplet::createWidgetIfNecessary()
 
 void RenderApplet::layout()
 {
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
     ASSERT(needsLayout());
 
     computeLogicalWidth();
@@ -91,7 +91,6 @@ void RenderApplet::layout()
     // The applet's widget gets created lazily upon first layout.
     createWidgetIfNecessary();
     setNeedsLayout(false);
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 #if USE(ACCELERATED_COMPOSITING)

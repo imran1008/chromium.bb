@@ -73,6 +73,7 @@ namespace WebCore {
     void (*g_startLayoutDebugFunc)(void) = NULL;
     void (*g_endLayoutDebugFunc)(void) = NULL;
     extern void printLayoutTimeStamp(std::wostream&, LayoutTimeStamp*);
+    extern void deleteLayoutTimeStamp(LayoutTimeStamp*);
 }
 
 void endLayoutDebug() {
@@ -87,7 +88,9 @@ void endLayoutDebug() {
         WebCore::LayoutTimeStamp *item = WebCore::g_layoutTimeStamp->at(i);
         ss.str(L"");
         WebCore::printLayoutTimeStamp(ss, item);
+        WebCore::deleteLayoutTimeStamp(item);
         OutputDebugStringW(ss.str().c_str());
+        OutputDebugStringW(L"\n");
     }
 
     // WebCore::g_layoutTimeStamp->clear();
@@ -108,8 +111,8 @@ int main(int argc, char* argv[]) {
   base::EnableTerminationOnHeapCorruption();
 
   //NOTE: uncomment the following lines to enable layout profiling
-  //WebCore::g_startLayoutDebugFunc = &startLayoutDebug;
-  //WebCore::g_endLayoutDebugFunc = &endLayoutDebug;
+  WebCore::g_startLayoutDebugFunc = &startLayoutDebug;
+  WebCore::g_endLayoutDebugFunc = &endLayoutDebug;
   
   // Some tests may use base::Singleton<>, thus we need to instanciate
   // the AtExitManager or else we will leak objects.

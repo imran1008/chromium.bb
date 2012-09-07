@@ -140,8 +140,11 @@ void printLayoutTimeStamp(std::wostream& os, WebCore::LayoutTimeStamp* item)
        << item->id.charactersWithNullTermination() << L","
        << item->renderName << L","
        << item->duration*1000 << L","
-       << item->parent << L'\n';
+       << item->parent;
+}
 
+void deleteLayoutTimeStamp(WebCore::LayoutTimeStamp* item)
+{
     delete item;
 }
 

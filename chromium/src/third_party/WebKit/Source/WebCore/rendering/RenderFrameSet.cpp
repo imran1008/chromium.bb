@@ -461,7 +461,7 @@ void RenderFrameSet::layout()
 {
     ASSERT(needsLayout());
 
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
 
     bool doFullRepaint = selfNeedsLayout() && checkForRepaintDuringLayout();
     LayoutRect oldBounds;
@@ -508,8 +508,6 @@ void RenderFrameSet::layout()
         layer()->updateTransform();
 
     setNeedsLayout(false);
-
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderFrameSet::positionFrames()

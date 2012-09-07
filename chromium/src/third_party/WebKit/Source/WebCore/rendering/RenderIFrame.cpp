@@ -188,14 +188,13 @@ void RenderIFrame::layoutSeamlessly()
 void RenderIFrame::layout()
 {
     ASSERT(needsLayout());
-    RENDER_OBJECT_LAYOUT_DEBUG_START;
+    LayoutTimeStampScope timestampScope(this);
 
     if (flattenFrame()) {
         RenderPart::computeLogicalWidth();
         RenderPart::computeLogicalHeight();
         layoutWithFlattening(style()->width().isFixed(), style()->height().isFixed());
         // FIXME: Is early return really OK here? What about transform/overflow code below?
-        RENDER_OBJECT_LAYOUT_DEBUG_END;
         return;
     } else if (isSeamless()) {
         layoutSeamlessly();
@@ -211,7 +210,6 @@ void RenderIFrame::layout()
     updateLayerTransform();
 
     setNeedsLayout(false);
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 }

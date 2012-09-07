@@ -1304,7 +1304,7 @@ void RenderListMarker::layout()
 {
     ASSERT(needsLayout());
 
-    RENDER_OBJECT_LAYOUT_DEBUG_START; 
+    LayoutTimeStampScope timestampScope(this);
 
     if (isImage()) {
         setWidth(m_image->imageSize(this, style()->effectiveZoom()).width());
@@ -1325,7 +1325,6 @@ void RenderListMarker::layout()
         setMarginEnd(endMargin.value());
 
     setNeedsLayout(false);
-    RENDER_OBJECT_LAYOUT_DEBUG_END;
 }
 
 void RenderListMarker::imageChanged(WrappedImagePtr o, const IntRect*)

@@ -107,6 +107,28 @@ bool RenderObject::s_affectsParentBlock = false;
 
 RenderObjectAncestorLineboxDirtySet* RenderObject::s_ancestorLineboxDirtySet = 0;
 
+LayoutTimeStampScope::LayoutTimeStampScope(RenderObject *obj)
+{
+    if (g_layoutTimeStamp) {
+        Element *elem = static_cast<Element *>(obj->node()); \
+        ElementAttributeData *data = elem ? elem->attributeData() : NULL; \
+        d_item = 
+            new LayoutTimeStamp(
+            obj, obj->parent(), obj->isAnonymous() ? "<ANONYMOUS>" : obj->node()->nodeName(),
+            data && data->hasID() ? data->idForStyleResolution().string() : "<NULL>",
+            obj->renderName(), 0);
+        d_startTime = WTF::monotonicallyIncreasingTime();
+    }
+}
+
+LayoutTimeStampScope::~LayoutTimeStampScope()
+{
+    if (g_layoutTimeStamp) {
+        d_item->duration = WTF::monotonicallyIncreasingTime() - d_startTime;
+        g_layoutTimeStamp->push_back(d_item);
+    }
+}
+
 void* RenderObject::operator new(size_t sz, RenderArena* renderArena)
 {
     return renderArena->allocate(sz);
