@@ -111,8 +111,8 @@ int main(int argc, char* argv[]) {
   base::EnableTerminationOnHeapCorruption();
 
   //NOTE: uncomment the following lines to enable layout profiling
-  WebCore::g_startLayoutDebugFunc = &startLayoutDebug;
-  WebCore::g_endLayoutDebugFunc = &endLayoutDebug;
+  //WebCore::g_startLayoutDebugFunc = &startLayoutDebug;
+  //WebCore::g_endLayoutDebugFunc = &endLayoutDebug;
   
   // Some tests may use base::Singleton<>, thus we need to instanciate
   // the AtExitManager or else we will leak objects.
