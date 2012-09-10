@@ -149,9 +149,17 @@ struct LayoutTimeStamp {
 };
 
 class LayoutTimeStampScope {
+    // INSTANCE DATA
     LayoutTimeStamp* d_item;
     double           d_startTime;
+
+private:
+    // NOT IMPLEMENTED
+    LayoutTimeStampScope(const LayoutTimeStampScope&);
+    LayoutTimeStampScope& operator=(const LayoutTimeStampScope&);
+
 public:
+    // CREATORS
     LayoutTimeStampScope(RenderObject *item);
     ~LayoutTimeStampScope();
 };
