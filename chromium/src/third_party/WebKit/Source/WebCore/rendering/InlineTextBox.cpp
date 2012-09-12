@@ -680,27 +680,53 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
     if (hasHyphen())
         length = textRun.length();
 
+#define ENABLE_LAYOUT_FIX_TEXT_Y_OFFSET 1
+#if ENABLE(LAYOUT_FIX_TEXT_Y_OFFSET)
+    // The following code is addressing the issue when a text is misplaced
+    // within a layout box.  The reason is that a 'textOrigin' is defined as a
+    // lower-left corner of a text, whereas the layout calculating a 'boxRect'
+    // position from it's upper-left corner.  Therefore, we have a situation
+    // like
+    //        (*)------------------  where (*) - origin point for the clip box
+    //         |  ^               |        (o) - origin point for the text
+    //         |  |               |
+    //         | (o)---------->   |
+    //         --------------------
+    //
+    // So, it's possible that the (*) and (o) will be rounded differently in
+    // the case when the transformation of (*) gives a decimal part less than
+    // 0.5, but the transformation of (0) fixes a decimal part greater than
+    // 0.5.  Then the text will be positioned 1px lower than expected, which
+    // can cause an invalidate issues, fox example a lower pixel of 'g' won't
+    // be rendered.
+    //
+    // The solution is to calculate a text offset from rounded position of
+    // the layout box.  The code below modifies a current 'matrix' in a canvas,
+    // so it targets (*) as (0,0) origin.  Then it rounds (*), so the text
+    // origin (o) will be calculated from the same point as the layout box.
+    //
     SkMatrix savedCanvasMatrix;
     bool     didSaveCanvasMatrix = false;
-
-    static int roundClipBox = 1;
-    if (roundClipBox) {
+    {
         SkCanvas *canvas = context->platformContext()->canvas();
         const SkMatrix& m = canvas->getTotalMatrix();
-        // save matrix
+        // save the current matrix
         savedCanvasMatrix = m;
         didSaveCanvasMatrix = true;
-        //
+        // make a copy of the current matrix
         SkMatrix m_(m);
-        // move a canvas origin point, so the 'clipRect' origin is (0.0)
+        // move a canvas origin point, so the layout box origin is (0.0)
         m_.preTranslate(boxRect.x(), boxRect.y());
-        // set new matrix for text rendering
+        // round the layout origin point
+        m_.setTranslateY((int)(m_.getTranslateY() + 0.5));
+        // set the updated matrix into the canvas for text rendering
         canvas->setMatrix(m_);
         textOrigin.setX(textOrigin.x() - boxRect.x());
         textOrigin.setY(textOrigin.y() - boxRect.y());
         boxRect.setX(0);
         boxRect.setY(0);
     }
+#endif
 
     int sPos = 0;
     int ePos = 0;
@@ -774,11 +800,13 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
         }
     }
 
-    // restore the canvas translate
+#if ENABLE(LAYOUT_FIX_TEXT_Y_OFFSET)
+    // restore the original canvas matrix
     if (didSaveCanvasMatrix) {
         SkCanvas *canvas = context->platformContext()->canvas();
         canvas->setMatrix(savedCanvasMatrix);
     }
+#endif
 
     // Paint decorations
     int textDecorations = styleToUse->textDecorationsInEffect();
