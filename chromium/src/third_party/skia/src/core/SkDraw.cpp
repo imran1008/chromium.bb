@@ -1667,8 +1667,11 @@ class TextMapState {
 public:
     mutable SkPoint fLoc;
 
-    TextMapState(const SkMatrix& matrix, SkScalar y)
-        : fMatrix(matrix), fProc(matrix.getMapXYProc()), fY(y) {}
+    TextMapState(const SkMatrix& matrix, SkScalar y, bool roundOrigin = false)
+        : fMatrix(matrix), fProc(matrix.getMapXYProc())
+        , fY(y), fRoundOrigin(roundOrigin)
+    {
+    }
 
     typedef void (*Proc)(const TextMapState&, const SkScalar pos[]);
 
@@ -1680,6 +1683,8 @@ private:
     SkScalar            fY; // ignored by MapXYProc
     // these are only used by Only... procs
     SkScalar            fScaleX, fTransX, fTransformedY;
+    // used for text Y positioning
+    bool                fRoundOrigin;
 
     static void MapXProc(const TextMapState& state, const SkScalar pos[]) {
         state.fProc(state.fMatrix, *pos, state.fY, &state.fLoc);
@@ -1711,8 +1716,16 @@ TextMapState::Proc TextMapState::pickProc(int scalarsPerPosition) {
         } else {
             fScaleX = fMatrix.getScaleX();
             fTransX = fMatrix.getTranslateX();
-            fTransformedY = SkScalarMul(fY, fMatrix.getScaleY()) +
-                            fMatrix.getTranslateY();
+
+            if (fRoundOrigin) {
+                fTransformedY = SkScalarMul(fY, fMatrix.getScaleY()) +
+                                (int)(fMatrix.getTranslateY() + 0.5);
+            }
+            else {
+                fTransformedY = SkScalarMul(fY, fMatrix.getScaleY()) +
+                                fMatrix.getTranslateY();
+            }
+
             return (mtype & SkMatrix::kScale_Mask) ?
                         MapOnlyScaleXProc : MapOnlyTransXProc;
         }
@@ -1772,7 +1785,7 @@ void SkDraw::drawPosText(const char text[], size_t byteLength,
     AlignProc          alignProc = pick_align_proc(paint.getTextAlign());
     SkDraw1Glyph       d1g;
     SkDraw1Glyph::Proc proc = d1g.init(this, blitter, cache);
-    TextMapState       tms(*matrix, constY);
+    TextMapState       tms(*matrix, constY, !cache->isSubpixel());
     TextMapState::Proc tmsProc = tms.pickProc(scalarsPerPosition);
 
     if (cache->isSubpixel()) {

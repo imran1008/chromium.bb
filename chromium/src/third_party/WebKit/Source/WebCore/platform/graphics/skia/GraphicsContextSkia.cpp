@@ -1075,6 +1075,12 @@ void GraphicsContext::translate(float w, float h)
     if (paintingDisabled())
         return;
 
+    if (false) { //ab# debug trace
+        wchar_t traceBuf[128] = {0};
+        swprintf(traceBuf, L"[ab] GraphicsContext::translate: w=%f h=%f\n", w, h);
+        ::OutputDebugStringW(traceBuf);
+    }
+
     platformContext()->canvas()->translate(WebCoreFloatToSkScalar(w),
                                            WebCoreFloatToSkScalar(h));
 }

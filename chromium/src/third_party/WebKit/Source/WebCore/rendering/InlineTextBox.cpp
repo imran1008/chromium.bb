@@ -50,6 +50,10 @@
 #include <wtf/AlwaysInline.h>
 #include <wtf/text/CString.h>
 
+#include "PlatformContextSkia.h"
+
+#include "CSSParser.h"
+
 using namespace std;
 
 namespace WebCore {
@@ -676,6 +680,50 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
     if (hasHyphen())
         length = textRun.length();
 
+    { //ab# debug trace
+        wchar_t traceBuf[4096] = {0};
+        const SkMatrix& m = context->platformContext()->canvas()->getTotalMatrix();
+        swprintf(traceBuf, L"[ab] InlineTextBox::paint: text=%.*s len=%d origin:{x=%f y=%f} box:{x=%f y=%f w=%f h=%f} m:{tx=%f ty=%f sx=%f sy=%f}\n",
+            maximumLength, characters, maximumLength, textOrigin.x(), textOrigin.y(),
+            boxRect.x(), boxRect.y(), boxRect.width(), boxRect.height(),
+            m.getTranslateX(), m.getTranslateY(), m.getScaleX(), m.getScaleY());
+
+        ::OutputDebugStringW(traceBuf);
+    }
+
+    SkMatrix savedCanvasMatrix;
+    bool     didSaveCanvasMatrix = false;
+
+    static int roundClipBox = 1;
+    if (roundClipBox) {
+        SkCanvas *canvas = context->platformContext()->canvas();
+        const SkMatrix& m = canvas->getTotalMatrix();
+        // save matrix
+        savedCanvasMatrix = m;
+        didSaveCanvasMatrix = true;
+        //
+        SkMatrix m_(m);
+        // move a canvas origin point, so the 'clipRect' origin is (0.0)
+        m_.preTranslate(boxRect.x(), boxRect.y());
+        // set new matrix for text rendering
+        canvas->setMatrix(m_);
+        textOrigin.setX(textOrigin.x() - boxRect.x());
+        textOrigin.setY(textOrigin.y() - boxRect.y());
+        boxRect.setX(0);
+        boxRect.setY(0);
+
+        { //ab# debug trace
+            wchar_t traceBuf[4096] = {0};
+            const SkMatrix& m = context->platformContext()->canvas()->getTotalMatrix();
+            swprintf(traceBuf, L"[ab] InlineTextBox::paint: text=%.*s len=%d origin:{x=%f y=%f} box:{x=%f y=%f w=%f h=%f} m:{tx=%f ty=%f sx=%f sy=%f} *\n",
+                maximumLength, characters, maximumLength, textOrigin.x(), textOrigin.y(),
+                boxRect.x(), boxRect.y(), boxRect.width(), boxRect.height(),
+                m.getTranslateX(), m.getTranslateY(), m.getScaleX(), m.getScaleY());
+
+            ::OutputDebugStringW(traceBuf);
+        }
+    }
+
     int sPos = 0;
     int ePos = 0;
     if (paintSelectedTextOnly || paintSelectedTextSeparately)
@@ -745,6 +793,23 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
 
             if (combinedText)
                 context->concatCTM(rotation(boxRect, Counterclockwise));
+        }
+    }
+
+    // restore the canvas translate
+    if (didSaveCanvasMatrix) {
+        SkCanvas *canvas = context->platformContext()->canvas();
+        canvas->setMatrix(savedCanvasMatrix);
+
+        { //ab# debug trace
+            wchar_t traceBuf[4096] = {0};
+            const SkMatrix& m = context->platformContext()->canvas()->getTotalMatrix();
+            swprintf(traceBuf, L"[ab] InlineTextBox::paint: text=%.*s len=%d origin:{x=%f y=%f} box:{x=%f y=%f w=%f h=%f} m:{tx=%f ty=%f sx=%f sy=%f} **\n",
+                maximumLength, characters, maximumLength, textOrigin.x(), textOrigin.y(),
+                boxRect.x(), boxRect.y(), boxRect.width(), boxRect.height(),
+                m.getTranslateX(), m.getTranslateY(), m.getScaleX(), m.getScaleY());
+
+            ::OutputDebugStringW(traceBuf);
         }
     }
 
