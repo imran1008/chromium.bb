@@ -680,17 +680,6 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
     if (hasHyphen())
         length = textRun.length();
 
-    { //ab# debug trace
-        wchar_t traceBuf[4096] = {0};
-        const SkMatrix& m = context->platformContext()->canvas()->getTotalMatrix();
-        swprintf(traceBuf, L"[ab] InlineTextBox::paint: text=%.*s len=%d origin:{x=%f y=%f} box:{x=%f y=%f w=%f h=%f} m:{tx=%f ty=%f sx=%f sy=%f}\n",
-            maximumLength, characters, maximumLength, textOrigin.x(), textOrigin.y(),
-            boxRect.x(), boxRect.y(), boxRect.width(), boxRect.height(),
-            m.getTranslateX(), m.getTranslateY(), m.getScaleX(), m.getScaleY());
-
-        ::OutputDebugStringW(traceBuf);
-    }
-
     SkMatrix savedCanvasMatrix;
     bool     didSaveCanvasMatrix = false;
 
@@ -711,17 +700,6 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
         textOrigin.setY(textOrigin.y() - boxRect.y());
         boxRect.setX(0);
         boxRect.setY(0);
-
-        { //ab# debug trace
-            wchar_t traceBuf[4096] = {0};
-            const SkMatrix& m = context->platformContext()->canvas()->getTotalMatrix();
-            swprintf(traceBuf, L"[ab] InlineTextBox::paint: text=%.*s len=%d origin:{x=%f y=%f} box:{x=%f y=%f w=%f h=%f} m:{tx=%f ty=%f sx=%f sy=%f} *\n",
-                maximumLength, characters, maximumLength, textOrigin.x(), textOrigin.y(),
-                boxRect.x(), boxRect.y(), boxRect.width(), boxRect.height(),
-                m.getTranslateX(), m.getTranslateY(), m.getScaleX(), m.getScaleY());
-
-            ::OutputDebugStringW(traceBuf);
-        }
     }
 
     int sPos = 0;
@@ -800,17 +778,6 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
     if (didSaveCanvasMatrix) {
         SkCanvas *canvas = context->platformContext()->canvas();
         canvas->setMatrix(savedCanvasMatrix);
-
-        { //ab# debug trace
-            wchar_t traceBuf[4096] = {0};
-            const SkMatrix& m = context->platformContext()->canvas()->getTotalMatrix();
-            swprintf(traceBuf, L"[ab] InlineTextBox::paint: text=%.*s len=%d origin:{x=%f y=%f} box:{x=%f y=%f w=%f h=%f} m:{tx=%f ty=%f sx=%f sy=%f} **\n",
-                maximumLength, characters, maximumLength, textOrigin.x(), textOrigin.y(),
-                boxRect.x(), boxRect.y(), boxRect.width(), boxRect.height(),
-                m.getTranslateX(), m.getTranslateY(), m.getScaleX(), m.getScaleY());
-
-            ::OutputDebugStringW(traceBuf);
-        }
     }
 
     // Paint decorations
