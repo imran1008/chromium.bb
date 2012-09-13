@@ -695,15 +695,15 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
     //
     // So, it's possible that the (*) and (o) will be rounded differently in
     // the case when the transformation of (*) gives a decimal part less than
-    // 0.5, but the transformation of (0) fixes a decimal part greater than
+    // 0.5, but the transformation of (o) fixes a decimal part greater than
     // 0.5.  Then the text will be positioned 1px lower than expected, which
     // can cause an invalidate issues, fox example a lower pixel of 'g' won't
     // be rendered.
     //
-    // The solution is to calculate a text offset from rounded position of
-    // the layout box.  The code below modifies a current 'matrix' in a canvas,
-    // so it targets (*) as (0,0) origin.  Then it rounds (*), so the text
-    // origin (o) will be calculated from the same point as the layout box.
+    // The proposed solution is to detect whether (*) will be rounded to lower
+    // value and to forcibly round the (o) to lower value as well. If the (*)
+    // will be rounded to higher value, then leave the default rounding for the
+    // (o).
     //
     SkMatrix savedCanvasMatrix;
     bool     didSaveCanvasMatrix = false;
@@ -716,15 +716,19 @@ void InlineTextBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, 
         // make a copy of the current matrix
         SkMatrix m_(m);
         // move a canvas origin point, so the layout box origin is (0.0)
-        m_.preTranslate(boxRect.x(), boxRect.y());
-        // round the layout origin point
-        m_.setTranslateY((int)(m_.getTranslateY() + 0.5));
+        m_.preTranslate(0, boxRect.y());
+        textOrigin.setY(textOrigin.y() - boxRect.y());
+        boxRect.setY(0);
+        // detect whether (*) will be rounded to lower value
+        if ((int)m_.getTranslateY() == (int)(m_.getTranslateY() + 0.5)) {
+            // if yes, forcibly round the (o) to lower value as well
+            m_.preTranslate(0, textOrigin.y());
+            m_.setTranslateY((int)m_.getTranslateY());
+            boxRect.setY(-textOrigin.y());
+            textOrigin.setY(0);
+        }
         // set the updated matrix into the canvas for text rendering
         canvas->setMatrix(m_);
-        textOrigin.setX(textOrigin.x() - boxRect.x());
-        textOrigin.setY(textOrigin.y() - boxRect.y());
-        boxRect.setX(0);
-        boxRect.setY(0);
     }
 #endif
 
