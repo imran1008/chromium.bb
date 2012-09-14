@@ -6,6 +6,45 @@
 
 #include "content/shell/shell_main_delegate.h"
 #include "sandbox/src/sandbox_types.h"
+#include "sstream"
+
+namespace WebCore {
+    struct LayoutTimeStamp;
+    std::vector<LayoutTimeStamp*> *g_layoutTimeStamp = NULL;
+    void (*g_startLayoutDebugFunc)(void) = NULL;
+    void (*g_endLayoutDebugFunc)(void) = NULL;
+    extern void printLayoutTimeStamp(std::wostream&, LayoutTimeStamp*);
+    extern void deleteLayoutTimeStamp(LayoutTimeStamp*);
+}
+
+void endLayoutDebug() {
+    if (!WebCore::g_layoutTimeStamp || WebCore::g_layoutTimeStamp->empty()) {
+        return;
+    }
+
+    // print out the result
+    std::wstringstream ss;
+
+    for(int i = 0, len = WebCore::g_layoutTimeStamp->size() ; i < len; i++) {
+        WebCore::LayoutTimeStamp *item = WebCore::g_layoutTimeStamp->at(i);
+        ss.str(L"");
+        WebCore::printLayoutTimeStamp(ss, item);
+        WebCore::deleteLayoutTimeStamp(item);
+        OutputDebugStringW(ss.str().c_str());
+        OutputDebugStringW(L"\n");
+    }
+
+    // WebCore::g_layoutTimeStamp->clear();
+    delete WebCore::g_layoutTimeStamp;
+    WebCore::g_layoutTimeStamp = NULL;
+}
+
+void startLayoutDebug() {
+    if (WebCore::g_layoutTimeStamp) {
+        endLayoutDebug();
+    }
+    WebCore::g_layoutTimeStamp = new std::vector<WebCore::LayoutTimeStamp*>();
+}
 
 #if defined(OS_WIN)
 #include "content/public/app/startup_helper_win.h"
