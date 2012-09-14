@@ -143,7 +143,7 @@ TestWebKitPlatformSupport::TestWebKitPlatformSupport(bool unit_test_mode)
 
   // Initializing with a default context, which means no on-disk cookie DB,
   // and no support for directory listings.
-  SimpleResourceLoaderBridge::Init(FilePath(), cache_mode, true);
+  SimpleResourceLoaderBridge::Init(FilePath(), cache_mode, true, NULL);
 
   // Test shell always exposes the GC.
   webkit_glue::SetJavaScriptFlags(" --expose-gc");
