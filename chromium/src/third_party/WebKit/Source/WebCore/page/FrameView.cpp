@@ -137,7 +137,8 @@ void printLayoutTimeStamp(std::wostream& os, WebCore::LayoutTimeStamp* item)
 {
     os << item->current << L","
        << item->tag.charactersWithNullTermination() << L","
-       << item->id.charactersWithNullTermination() << L","
+       << (item->id.isNull() ? L"" : item->id.charactersWithNullTermination()) << L","
+       << (item->name.isNull() ? L"" : item->name.charactersWithNullTermination()) << L","
        << item->renderName << L","
        << item->duration*1000 << L","
        << item->parent;
@@ -981,7 +982,7 @@ void FrameView::layout(bool allowSubtree)
         g_layoutTimeStamp->push_back(
             new LayoutTimeStamp(0, 0,
                 "--LAYOUT START--",
-                m_frame->document()->url().string(), "", 0));
+                m_frame->document()->url().string(), "", "", 0));
     }
 
     if (!allowSubtree && m_layoutRoot) {
@@ -1210,7 +1211,7 @@ void FrameView::layout(bool allowSubtree)
         g_layoutTimeStamp->push_back(
             new LayoutTimeStamp(0, 0,
                 "--LAYOUT END--",
-                m_frame->document()->url().string(), "", 0));
+                m_frame->document()->url().string(), "", "", 0));
     }
 
     m_nestedLayoutCount--;

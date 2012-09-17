@@ -133,16 +133,18 @@ struct LayoutTimeStamp {
     RenderObject *parent;
     String        tag;
     String        id;
+    String        name;
     const char*   renderName;
     double        duration;
 
     LayoutTimeStamp(RenderObject *current, RenderObject *parent,
-                    String tag, String id, const char* renderName,
-                    double duration)
+                    String tag, String id, String name, 
+                    const char* renderName, double duration)
                     : current(current)
                     , parent(parent)
                     , tag(tag)
                     , id(id)
+                    , name(name)
                     , renderName(renderName)
                     , duration(duration)
     {}
