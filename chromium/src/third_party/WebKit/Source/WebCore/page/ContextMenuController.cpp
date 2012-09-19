@@ -452,6 +452,7 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuItem* item)
         frame->editor()->changeBackToReplacedString(m_hitTestResult.replacedString());
         break;
 #endif
+#if !(defined(BLOOMBERG_TEXT_CHECKING) && BLOOMBERG_TEXT_CHECKING)
 #if USE(AUTOMATIC_TEXT_REPLACEMENT)
     case ContextMenuItemTagShowSubstitutions:
         frame->editor()->showSubstitutionsPanel();
@@ -474,6 +475,7 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuItem* item)
     case ContextMenuItemTagCorrectSpellingAutomatically:
         frame->editor()->toggleAutomaticSpellingCorrection();
         break;
+#endif
 #endif
 #if ENABLE(INSPECTOR)
     case ContextMenuItemTagInspectElement:
