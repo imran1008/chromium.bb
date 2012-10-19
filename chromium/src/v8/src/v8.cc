@@ -60,6 +60,7 @@ static LazyMutex entropy_mutex = LAZY_MUTEX_INITIALIZER;
 
 static EntropySource entropy_source;
 
+bool disable_access_callbacks = true;
 
 bool V8::Initialize(Deserializer* des) {
   FlagList::EnforceFlagImplications();

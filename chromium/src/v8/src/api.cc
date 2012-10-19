@@ -1343,12 +1343,16 @@ void ObjectTemplate::MarkAsUndetectable() {
   cons->set_undetectable(true);
 }
 
+extern bool disable_access_callbacks;
 
 void ObjectTemplate::SetAccessCheckCallbacks(
       NamedSecurityCallback named_callback,
       IndexedSecurityCallback indexed_callback,
       Handle<Value> data,
       bool turned_on_by_default) {
+  if (disable_access_callbacks) {
+      return;
+  }
   i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
   if (IsDeadCheck(isolate, "v8::ObjectTemplate::SetAccessCheckCallbacks()")) {
     return;
@@ -6338,7 +6342,6 @@ void Testing::PrepareStressRun(int run) {
 void Testing::DeoptimizeAll() {
   internal::Deoptimizer::DeoptimizeAll();
 }
-
 
 namespace internal {
 
