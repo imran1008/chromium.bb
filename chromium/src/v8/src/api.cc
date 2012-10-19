@@ -1343,7 +1343,7 @@ void ObjectTemplate::MarkAsUndetectable() {
   cons->set_undetectable(true);
 }
 
-extern bool disable_access_callbacks;
+bool disable_access_callbacks = false;
 
 void ObjectTemplate::SetAccessCheckCallbacks(
       NamedSecurityCallback named_callback,
