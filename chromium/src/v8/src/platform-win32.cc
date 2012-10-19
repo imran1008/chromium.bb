@@ -997,7 +997,6 @@ static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
     }
 
     if(commit) {
-
         VAMap::iterator reserved_it = va_map_reserved.find(res);
         if(reserved_it == va_map_reserved.end()) {
             va_statistics.separate_commits++;
