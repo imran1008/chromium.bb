@@ -865,9 +865,9 @@ bool RenderFlexibleBox::resolveFlexibleLengths(FlexSign flexSign, const OrderedF
             LayoutUnit preferredChildSize = preferredMainAxisContentExtentForChild(child);
             LayoutUnit childSize = preferredChildSize;
             if (availableFreeSpace > 0 && totalPositiveFlexibility > 0 && flexSign == PositiveFlexibility && isfinite(totalPositiveFlexibility))
-                childSize += static_cast<int>(lroundf(availableFreeSpace * child->style()->positiveFlex() / totalPositiveFlexibility));
+                childSize += availableFreeSpace * child->style()->positiveFlex() / totalPositiveFlexibility;
             else if (availableFreeSpace < 0 && totalWeightedNegativeFlexibility > 0 && flexSign == NegativeFlexibility && isfinite(totalWeightedNegativeFlexibility))
-                childSize += static_cast<int>(lroundf(availableFreeSpace * child->style()->negativeFlex() * preferredChildSize / totalWeightedNegativeFlexibility));
+                childSize += availableFreeSpace * child->style()->negativeFlex() * preferredChildSize / totalWeightedNegativeFlexibility;
 
             LayoutUnit adjustedChildSize = adjustChildSizeForMinAndMax(child, childSize, flexboxAvailableContentExtent);
             childSizes.append(adjustedChildSize);
@@ -1005,7 +1005,7 @@ void RenderFlexibleBox::layoutAndPlaceChildren(LayoutUnit& crossAxisOffset, cons
         mainAxisOffset += flowAwareMarginStartForChild(child);
 
         LayoutUnit childMainExtent = mainAxisExtentForChild(child);
-        IntPoint childLocation(shouldFlipMainAxis ? totalMainExtent - mainAxisOffset - childMainExtent : mainAxisOffset,
+        LayoutPoint childLocation(shouldFlipMainAxis ? totalMainExtent - mainAxisOffset - childMainExtent : mainAxisOffset,
             crossAxisOffset + flowAwareMarginBeforeForChild(child));
 
         // FIXME: Supporting layout deltas.
@@ -1048,7 +1048,7 @@ void RenderFlexibleBox::layoutColumnReverse(const OrderedFlexItemList& children,
         mainAxisOffset -= mainAxisExtentForChild(child) + flowAwareMarginEndForChild(child);
 
         LayoutRect oldRect = child->frameRect();
-        setFlowAwareLocationForChild(child, IntPoint(mainAxisOffset, crossAxisOffset + flowAwareMarginBeforeForChild(child)));
+        setFlowAwareLocationForChild(child, LayoutPoint(mainAxisOffset, crossAxisOffset + flowAwareMarginBeforeForChild(child)));
         if (!selfNeedsLayout() && child->checkForRepaintDuringLayout())
             child->repaintDuringLayoutIfMoved(oldRect);
 
