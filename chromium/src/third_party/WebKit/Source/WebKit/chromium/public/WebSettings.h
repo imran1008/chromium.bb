@@ -53,6 +53,13 @@ public:
         EditingBehaviorUnix
     };
 
+    enum FontSmoothingMode {
+        AutoSmoothing,
+        NoSmoothing,
+        Antialiased,
+        SubpixelAntialiased
+    };
+
     virtual void setStandardFontFamily(const WebString&, UScriptCode = USCRIPT_COMMON) = 0;
     virtual void setFixedFontFamily(const WebString&, UScriptCode = USCRIPT_COMMON) = 0;
     virtual void setSerifFontFamily(const WebString&, UScriptCode = USCRIPT_COMMON) = 0;
@@ -96,6 +103,7 @@ public:
     virtual void setEditableLinkBehaviorNeverLive() = 0;
     virtual void setFrameFlatteningEnabled(bool) = 0;
     virtual void setFontRenderingModeNormal() = 0;
+    virtual void setFontSmoothingMode(FontSmoothingMode mode) = 0;
     virtual void setAllowUniversalAccessFromFileURLs(bool) = 0;
     virtual void setAllowFileAccessFromFileURLs(bool) = 0;
     virtual void setTextDirectionSubmenuInclusionBehaviorNeverIncluded() = 0;

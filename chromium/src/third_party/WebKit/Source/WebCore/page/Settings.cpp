@@ -177,6 +177,7 @@ Settings::Settings(Page* page)
     , m_authorAndUserStylesEnabled(true)
     , m_needsSiteSpecificQuirks(false)
     , m_fontRenderingMode(0)
+    , m_fontSmoothingMode(0)
     , m_frameFlatteningEnabled(false)
     , m_webArchiveDebugModeEnabled(false)
     , m_localFileContentSniffingEnabled(false)
@@ -699,6 +700,19 @@ void Settings::setFontRenderingMode(FontRenderingMode mode)
 FontRenderingMode Settings::fontRenderingMode() const
 {
     return static_cast<FontRenderingMode>(m_fontRenderingMode);
+}
+
+void Settings::setFontSmoothing(FontSmoothingMode mode)
+{
+    if (fontSmoothing() == mode)
+        return;
+    m_fontSmoothingMode = mode;
+    m_page->setNeedsRecalcStyleInAllFrames();
+}
+
+FontSmoothingMode Settings::fontSmoothing() const
+{
+    return static_cast<FontSmoothingMode>(m_fontSmoothingMode);
 }
 
 void Settings::setNeedsSiteSpecificQuirks(bool needsQuirks)

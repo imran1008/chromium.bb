@@ -1615,6 +1615,7 @@ PassRefPtr<RenderStyle> StyleResolver::styleForDocument(Document* document, CSSF
         fontDescription.setSpecifiedSize(size);
         bool useSVGZoomRules = document->isSVGDocument();
         fontDescription.setComputedSize(StyleResolver::getComputedSizeFromSpecifiedSize(document, documentStyle.get(), fontDescription.isAbsoluteSize(), size, useSVGZoomRules));
+        fontDescription.setFontSmoothing(settings->fontSmoothing());
     }
 
     documentStyle->setFontDescription(fontDescription);

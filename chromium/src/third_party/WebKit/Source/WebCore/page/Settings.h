@@ -29,6 +29,7 @@
 
 #include "EditingBehaviorTypes.h"
 #include "FontRenderingMode.h"
+#include "FontSmoothingMode.h"
 #include "KURL.h"
 #include "Timer.h"
 #include <wtf/HashMap.h>
@@ -272,6 +273,9 @@ namespace WebCore {
         
         void setFontRenderingMode(FontRenderingMode mode);
         FontRenderingMode fontRenderingMode() const;
+
+        void setFontSmoothing(FontSmoothingMode mode);
+        FontSmoothingMode fontSmoothing() const;
 
         void setNeedsSiteSpecificQuirks(bool);
         bool needsSiteSpecificQuirks() const { return m_needsSiteSpecificQuirks; }
@@ -659,6 +663,7 @@ namespace WebCore {
         bool m_authorAndUserStylesEnabled : 1;
         bool m_needsSiteSpecificQuirks : 1;
         unsigned m_fontRenderingMode : 1;
+        unsigned m_fontSmoothingMode : 2;
         bool m_frameFlatteningEnabled : 1;
         bool m_webArchiveDebugModeEnabled : 1;
         bool m_localFileContentSniffingEnabled : 1;
