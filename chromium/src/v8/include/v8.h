@@ -2690,6 +2690,13 @@ typedef void (*MemoryAllocationCallback)(ObjectSpace space,
                                          AllocationAction action,
                                          int size);
 
+// VirtualAlloc/VirtualFree hooks
+
+#define VIRTUALALLOC_CALLBACK_SUPPORTED 1   // Use this to conditionally include code that calls V8::RegisterVirtualAllocCallbacks()
+
+typedef void* (*VirtualAllocCallback)(void* in_addr, unsigned int size, unsigned int allocation_type, unsigned int protect);
+typedef unsigned int (*VirtualFreeCallback)(void* in_addr, unsigned int size, unsigned int free_type);
+
 // --- Leave Script Callback ---
 typedef void (*CallCompletedCallback)();
 
@@ -2762,24 +2769,6 @@ class V8EXPORT HeapStatistics {
   friend class V8;
 };
 
-// Sizes are in Bytes
-struct V8EXPORT VirtualAllocStatistics {
- public:
-  VirtualAllocStatistics();
-
-  size_t reserved;
-  size_t committed;
-  size_t allocs;
-  size_t frees;
-  size_t commits;
-  size_t decommits;
-  size_t outstanding_reserved;
-  size_t outstanding_committed;
-  size_t separate_commits;
-  size_t separate_decommits;
-  size_t duplicate_reserved;
-  size_t alloc_errors;
-};
 
 class RetainedObjectInfo;
 
@@ -3344,10 +3333,10 @@ class V8EXPORT V8 {
    */
   static int ContextDisposedNotification();
 
-  /**
-   * Get statistics about the VirtualAlloc memory usage.
+  /*
+   * allow hooking of VirtualAlloc and VirtualFree
    */
-  static const VirtualAllocStatistics& GetVirtualAllocStatistics();
+  static void RegisterVirtualAllocCallbacks(VirtualAllocCallback alloc_func, VirtualFreeCallback free_func);
 
  private:
   V8();

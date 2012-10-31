@@ -36,8 +36,6 @@
 #include "platform.h"
 #include "vm-state-inl.h"
 
-#include <map>
-
 #ifdef _MSC_VER
 
 // Case-insensitive bounded string comparisons. Use stricmp() on Win32. Usually
@@ -125,35 +123,20 @@ int random() {
   return rand();
 }
 
-typedef std::map<void*, unsigned int> VAMap;
-
-static VAMap va_map_reserved;
-static VAMap va_map_committed;
-static v8::VirtualAllocStatistics va_statistics;
 
 namespace v8 {
 
-VirtualAllocStatistics::VirtualAllocStatistics()
-: reserved(0)
-, committed(0)
-, allocs(0)
-, frees(0)
-, commits(0)
-, decommits(0)
-, outstanding_reserved(0)
-, outstanding_committed(0)
-, separate_commits(0)
-, separate_decommits(0)
-, duplicate_reserved(0)
-, alloc_errors(0)
-{}
+static VirtualAllocCallback VirtualAlloc_Func = NULL;
+static VirtualFreeCallback  VirtualFree_Func  = NULL;
 
-const VirtualAllocStatistics& V8::GetVirtualAllocStatistics() {
-  va_statistics.outstanding_reserved = va_map_reserved.size();
-  va_statistics.outstanding_committed = va_map_committed.size();
-  return va_statistics;
+  /*
+   * allow hooking of VirtualAlloc and VirtualFree
+   */
+void V8::RegisterVirtualAllocCallbacks(VirtualAllocCallback alloc_func, VirtualFreeCallback free_func)
+{
+    VirtualAlloc_Func = alloc_func;
+    VirtualFree_Func  = free_func;
 }
-
 
 namespace internal {
 
@@ -912,33 +895,6 @@ static void* GetRandomAddr() {
 }
 
 
-// Define this to trace all VirtualAllocs / VirtualFrees verbosely to the system debug stream
-//#define V8_TRACE_VIRTUALALLOC 1
-
-// PageMap holds a BYTE per 4K virtual page. This keeps track of the state of each page - 
-// unused, reserved or allocated. An array is used for fast lookup.
-// Really the only performance hit is when a VirtualAlloc request happens for a large size - 
-// this routine will have to loop size/4K times to populate the correct elements of PageMap.
-// The primary purpose of the PageMap is to allow us to know when to correctly increment or
-// decrement va_statistics.reserved and va_statistics.committed.
-
-static const int PageMapSize = 1048576; // enough entries for 4GB of 4K pages
-static BYTE PageMap[PageMapSize];
-enum {
-    PageMap_Unused = 0,
-    PageMap_Reserved = 1,
-    PageMap_Committed = 2
-};
-static bool PageMapInitialized = false;
-
-static void InitializePageMap()
-{
-    if(!PageMapInitialized) {
-        PageMapInitialized = true;
-        memset(PageMap, PageMap_Unused, PageMapSize);
-    }
-}
-
 static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
                                     SIZE_T dwSize,
                                     DWORD flAllocationType,
@@ -946,223 +902,28 @@ static LPVOID MonitoredVirtualAlloc(LPVOID lpAddress,
 {
     LPVOID res;
 
-    InitializePageMap();
-
-    res = VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
-
-    bool reserve = (flAllocationType & MEM_RESERVE) ? true : false;
-    bool commit = (flAllocationType & MEM_COMMIT) ? true : false;
-
-#ifdef V8_TRACE_VIRTUALALLOC
-    {
-        char buf[256];
-        sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualAlloc: inaddr=0x%x size=%d alloctype=0x%x(%s%s) protect=0x%x -> res=0x%x\n", 
-            lpAddress, dwSize, flAllocationType, 
-            reserve ? "reserve " : "",
-            commit ? "commit " : "",
-            flProtect, res);
-        ::OutputDebugStringA(buf);
-    }
-#endif
-
-    if(res == NULL) {
-        va_statistics.alloc_errors++;
-#ifdef V8_TRACE_VIRTUALALLOC
-        char buf[256];
-        sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualAlloc: Out: Failed\n");
-        ::OutputDebugStringA(buf);
-#endif
-        return res;
+    if(VirtualAlloc_Func != NULL) {
+        res = VirtualAlloc_Func(lpAddress, dwSize, flAllocationType, flProtect);
+    } else {
+        res = VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
     }
 
-
-    if(reserve) {
-        bool already = false;
-        if(lpAddress != NULL) {
-            VAMap::iterator reserved_it = va_map_reserved.find(res);
-            if(reserved_it != va_map_reserved.end()) {
-#ifdef V8_TRACE_VIRTUALALLOC
-                char buf[256];
-                sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualAlloc: Duplicate reserved addr\n");
-                ::OutputDebugStringA(buf);
-#endif
-                already = true;
-                va_statistics.duplicate_reserved++;
-            }
-        }
-        if(!already) {
-            va_map_reserved[res] = dwSize;
-            va_statistics.allocs++;
-        }
-    }
-
-    if(commit) {
-        VAMap::iterator reserved_it = va_map_reserved.find(res);
-        if(reserved_it == va_map_reserved.end()) {
-            va_statistics.separate_commits++;
-        }
-
-        VAMap::iterator committed_it = va_map_committed.find(res);
-        if(committed_it != va_map_committed.end()) {
-            // this address is already in our map, so don't double-count it
-#ifdef V8_TRACE_VIRTUALALLOC
-            {
-                char buf[256];
-                sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualAlloc: Address 0x%x was already committed (newsize=%d oldsize=%d)\n", 
-                    res, dwSize, committed_it->second);
-                ::OutputDebugStringA(buf);
-            }
-#endif
-        } else {
-            va_statistics.commits++;
-        }
-        va_map_committed[res] = dwSize;
-    }
-
-
-    size_t i;
-    size_t ps = GetPageSize();
-    for(i=0; i<dwSize; i += ps)
-    {
-        const BYTE* pageaddr = (const BYTE*)res + i;
-        int pageindex = (size_t)pageaddr / ps;
-        switch(PageMap[pageindex]) {
-        case PageMap_Unused:
-            va_statistics.reserved += ps;
-            if(commit) {
-                va_statistics.committed += ps;
-            }
-            break;
-        case PageMap_Reserved:
-            if(commit) {
-                // page wasn't already committed, so add it to stats
-                va_statistics.committed += ps;
-            }
-            break;
-        case PageMap_Committed:
-            // page was already committed
-            break;
-        default:
-            break;
-        }
-        PageMap[pageindex] = commit ? PageMap_Committed : PageMap_Reserved;
-    }
-
-#ifdef V8_TRACE_VIRTUALALLOC
-    {
-        char buf[256];
-        sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualAlloc: Out: res=0x%x (to 0x%x) size=%d Total reserved=%d KB committed=%d KB\n", 
-            res, (const BYTE*)res+dwSize-1, dwSize, va_statistics.reserved/1024, va_statistics.committed/1024);
-        ::OutputDebugStringA(buf);
-    }
-#endif
-
-    return res;
+	return res;
 }
 
-BOOL MonitoredVirtualFree(LPVOID lpAddress,
+static BOOL MonitoredVirtualFree(LPVOID lpAddress,
                           SIZE_T dwSize,
                           DWORD dwFreeType)
 {
     BOOL res;
 
-    InitializePageMap();
-
-    VAMap::iterator reserved_it = va_map_reserved.find(lpAddress);
-    VAMap::iterator committed_it = va_map_committed.find(lpAddress);
-
-    res = VirtualFree(lpAddress, dwSize, dwFreeType);
-
-    bool decommit = (dwFreeType & MEM_DECOMMIT);
-    bool release = (dwFreeType & MEM_RELEASE);
-
-#ifdef V8_TRACE_VIRTUALALLOC
-    {
-        char buf[256];
-        sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualFree: inaddr=0x%x (to 0x%x) size=%d freetype=0x%x(%s%s) -> res=0x%x\n", 
-            lpAddress, (const BYTE*)lpAddress+dwSize-1, dwSize, dwFreeType, 
-            decommit ? "decommit " : "",
-            release ? "release " : "",
-            res);
-        ::OutputDebugStringA(buf);
-    }
-#endif
-
-    size_t storedsize=0;
-
-    if(decommit) {
-        if(committed_it != va_map_committed.end()) {
-#ifdef V8_TRACE_VIRTUALALLOC
-            char buf[256];
-            sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualFree: dwSize=%d; Stored committed entry was for %d bytes\n", dwSize, committed_it->second);
-            ::OutputDebugStringA(buf);
-#endif
-            storedsize = committed_it->second;
-            va_map_committed.erase(committed_it);
-            va_statistics.decommits++;
-        }
-    } else if(release) {
-        if(committed_it != va_map_committed.end()) {
-#ifdef V8_TRACE_VIRTUALALLOC
-            char buf[256];
-            sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualFree: dwSize=%d; Stored committed entry was for %d bytes\n", dwSize, committed_it->second);
-            ::OutputDebugStringA(buf);
-#endif
-            va_map_committed.erase(committed_it);
-            va_statistics.decommits++;
-            if(reserved_it == va_map_reserved.end()) {
-                va_statistics.separate_decommits++;
-            }
-        }
-        if(reserved_it != va_map_reserved.end()) {
-#ifdef V8_TRACE_VIRTUALALLOC
-            char buf[256];
-            sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualFree: dwSize=%d; Stored reserved entry was for %d bytes\n", dwSize, reserved_it->second);
-            ::OutputDebugStringA(buf);
-#endif
-            storedsize = reserved_it->second;
-            va_map_reserved.erase(reserved_it);
-        }
-        va_statistics.frees++;
+    if(VirtualFree_Func != NULL) {
+        res = VirtualFree_Func(lpAddress, dwSize, dwFreeType);
+    } else {
+        res = VirtualFree(lpAddress, dwSize, dwFreeType);
     }
 
-    size_t i;
-    size_t ps = GetPageSize();
-    for(i=0; i<storedsize; i += ps)
-    {
-        const BYTE* pageaddr = (const BYTE*)lpAddress + i;
-        int pageindex = (size_t)pageaddr / ps;
-        switch(PageMap[pageindex]) {
-        case PageMap_Unused:
-            // ignore unused pages
-            break;
-        case PageMap_Reserved:
-            if(release) {
-                va_statistics.reserved -= ps;
-            }
-            break;
-        case PageMap_Committed:
-            // page was committed
-            va_statistics.committed -= ps;
-            if(release) {
-                va_statistics.reserved -= ps;
-            }
-            break;
-        default:
-            break;
-        }
-        PageMap[pageindex] = release ? PageMap_Unused : PageMap_Reserved;
-    }
-
-#ifdef V8_TRACE_VIRTUALALLOC
-        {
-            char buf[256];
-            sprintf_s(buf, sizeof(buf), "V8: MonitoredVirtualFree: Out: size=%d Total reserved=%d KB committed=%d KB\n", 
-                dwSize, va_statistics.reserved/1024, va_statistics.committed/1024);
-            ::OutputDebugStringA(buf);
-        }
-#endif
-    return res;
+	return res;
 }
 
 static void* RandomizedVirtualAlloc(size_t size, int action, int protection) {
@@ -2406,8 +2167,6 @@ void Sampler::Stop() {
   SamplerThread::RemoveActiveSampler(this);
   SetActive(false);
 }
-
-
 
 
 } }  // namespace v8::internal
