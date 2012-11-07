@@ -2220,6 +2220,32 @@ void RenderBlock::setLogicalTopForChild(RenderBox* child, LayoutUnit logicalTop,
     }
 }
 
+bool shouldForceRelayoutChild(RenderBox* child)
+{
+	if (!child->node() || !child->node()->isElementNode()) {
+		return child->hasRelativeLogicalHeight();
+	}
+
+	static AtomicString s_bbcr_dont_relayout_if_percent_same("bbcr_dont_relayout_if_percent_same");
+	Element* elem = toElement(child->node());
+
+	if (!elem->hasClass() || !elem->attributeData()->classNames().contains(s_bbcr_dont_relayout_if_percent_same)) {
+		return child->hasRelativeLogicalHeight();
+	}
+
+	RenderStyle* st = child->style();
+
+	if (st->logicalMaxHeight().isPercent() || st->logicalMinHeight().isPercent()) {
+		return true;
+	}
+	if (!st->logicalHeight().isPercent()) {
+		return false;
+	}
+
+	LayoutUnit logicalHeight = child->computePercentageLogicalHeight(st->logicalHeight());
+	return logicalHeight != child->logicalHeight();
+}
+
 void RenderBlock::layoutBlockChildren(bool relayoutChildren, LayoutUnit& maxFloatLogicalBottom)
 {
     if (gPercentHeightDescendantsMap) {
@@ -2272,7 +2298,7 @@ void RenderBlock::layoutBlockChildren(bool relayoutChildren, LayoutUnit& maxFloa
         // Make sure we layout children if they need it.
         // FIXME: Technically percentage height objects only need a relayout if their percentage isn't going to be turned into
         // an auto value.  Add a method to determine this, so that we can avoid the relayout.
-        if (relayoutChildren || (child->hasRelativeLogicalHeight() && !isRenderView()))
+        if (relayoutChildren || (!isRenderView() && shouldForceRelayoutChild(child)))
             child->setChildNeedsLayout(true, MarkOnlyThis);
 
         // If relayoutChildren is set and the child has percentage padding or an embedded content box, we also need to invalidate the childs pref widths.
