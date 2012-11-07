@@ -476,7 +476,8 @@ void TestShell::CloseDevTools() {
 
 void TestShell::CreateDevToolsClient(TestShellDevToolsAgent *agent) {
   dev_tools_client_.reset(new TestShellDevToolsClient(agent,
-                                                      webView()));
+                                                      webView(),
+                                                      NULL));
 }
 
 bool TestShell::IsSVGTestURL(const GURL& url) {

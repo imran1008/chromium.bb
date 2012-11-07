@@ -7,6 +7,7 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "base/callback_forward.h"
 
 #include "third_party/WebKit/Source/WebKit/chromium/public/WebDevToolsFrontendClient.h"
 
@@ -22,7 +23,8 @@ class TestShellDevToolsAgent;
 class TestShellDevToolsClient: public WebKit::WebDevToolsFrontendClient {
  public:
   TestShellDevToolsClient(TestShellDevToolsAgent* agent,
-                          WebKit::WebView* web_view);
+                          WebKit::WebView* web_view,
+                          base::Closure* all_messages_processed_handler);
   virtual ~TestShellDevToolsClient();
 
   // WebDevToolsFrontendClient implementation
@@ -44,6 +46,8 @@ class TestShellDevToolsClient: public WebKit::WebDevToolsFrontendClient {
   TestShellDevToolsAgent* dev_tools_agent_;
   WebKit::WebView* web_view_;
   scoped_ptr<WebKit::WebDevToolsFrontend> web_tools_frontend_;
+
+  base::Closure* all_messages_processed_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(TestShellDevToolsClient);
 };

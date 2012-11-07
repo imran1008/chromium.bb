@@ -25,10 +25,13 @@ using WebKit::WebString;
 using WebKit::WebView;
 
 TestShellDevToolsClient::TestShellDevToolsClient(TestShellDevToolsAgent *agent,
-                                                 WebView* web_view)
+                                                 WebView* web_view,
+                                                 base::Closure* all_messages_processed_handler)
     : ALLOW_THIS_IN_INITIALIZER_LIST(weak_factory_(this)),
       dev_tools_agent_(agent),
-      web_view_(web_view) {
+      web_view_(web_view),
+      all_messages_processed_handler_(all_messages_processed_handler) {
+
   web_tools_frontend_.reset(WebDevToolsFrontend::create(web_view_, this,
       WebString::fromUTF8("en-US")));
   dev_tools_agent_->attach(this);
@@ -40,6 +43,9 @@ TestShellDevToolsClient::~TestShellDevToolsClient() {
   weak_factory_.InvalidateWeakPtrs();
   if (dev_tools_agent_)
     dev_tools_agent_->detach();
+
+  if (all_messages_processed_handler_)
+      delete all_messages_processed_handler_;
 }
 
 void TestShellDevToolsClient::sendMessageToBackend(
@@ -81,4 +87,8 @@ void TestShellDevToolsClient::all_messages_processed() {
   web_view_->mainFrame()->executeScript(WebKit::WebScriptSource(
       WebString::fromUTF8("if (window.WebInspector && "
       "WebInspector.queuesAreEmpty) WebInspector.queuesAreEmpty();")));
+
+  if (all_messages_processed_handler_) {
+      all_messages_processed_handler_->Run();
+  }
 }
