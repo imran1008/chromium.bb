@@ -11,6 +11,8 @@
 
 #include "third_party/WebKit/Source/WebKit/chromium/public/WebDevToolsFrontendClient.h"
 
+#define DEVTOOLS_CLIENT_ACCEPTS_ALL_MSG_PROCESSED_HANDLER
+
 namespace WebKit {
 
 class WebDevToolsFrontend;
