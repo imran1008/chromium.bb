@@ -388,7 +388,11 @@ bool BMPImageReader::processBitmasks()
 
         // For Windows V4+ 32-bit RGB, don't overwrite the alpha mask from the
         // header (see note in readInfoHeader()).
-        if (m_infoHeader.biBitCount < 32)
+
+        // For 32-bit BMP with a BITMAPINFOHEADER (40 byte) header, the high byte
+        // of every DWORD is left unused. It's not the alpha channel.
+        // See http://msdn.microsoft.com/en-us/library/dd183376%28VS.85%29.aspx
+        if (m_infoHeader.biBitCount < 32 || isWindowsV1())
             m_bitMasks[3] = 0;
         else if (!isWindowsV4Plus())
             m_bitMasks[3] = static_cast<uint32_t>(0xff000000);

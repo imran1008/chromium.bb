@@ -148,6 +148,13 @@ namespace WebCore {
             return (m_infoHeader.biSize == 108) || (m_infoHeader.biSize == 124);
         }
 
+        // Returns true if this is a BMP with BITMAPINFOHEADER (40 byte) header
+        inline bool isWindowsV1() const
+        {
+            // BITMAPINFOHEADER is 40 bytes.
+            return m_infoHeader.biSize == 40;
+        }
+
         // Returns false if consistency errors are found in the info header.
         bool isInfoHeaderValid() const;
 
