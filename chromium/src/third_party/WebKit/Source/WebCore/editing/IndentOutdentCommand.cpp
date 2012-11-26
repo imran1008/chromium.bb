@@ -268,6 +268,13 @@ void IndentOutdentCommand::formatSelection(const VisiblePosition& startOfSelecti
         outdentRegion(startOfSelection, endOfSelection);
 }
 
+bool areParagraphsOnSameListItem(const VisiblePosition& first, const VisiblePosition& second)
+{
+	Node* firstListItem = highestEnclosingNodeOfType(first.deepEquivalent(), &isListItem);
+	Node* secondListItem = highestEnclosingNodeOfType(second.deepEquivalent(), &isListItem);
+	return firstListItem && firstListItem == secondListItem;
+}
+
 void IndentOutdentCommand::formatRange(const Position& start, const Position& end, const Position&, RefPtr<Element>& blockquoteForNextIndent)
 {
     if (m_isBBVersion) {
@@ -303,6 +310,15 @@ void IndentOutdentCommand::formatRange(const Position& start, const Position& en
             VisiblePosition startOfNextParagraph = endOfCurrentParagraph.next();
 
             if (m_typeOfAction == Outdent) {
+				// If startOfCurrentParagraph and startOfNextParagraph are on the same
+				// list item, outdentRegion will still outdent the entire list item,
+				// which causes startOfNextParagraph to point to a removed node.
+				// We need to keep moving to the end of the next paragraph until the
+				// current paragraph and the next paragraph are not under the same list item.
+				while (endOfCurrentParagraph != endOfLastParagraph && areParagraphsOnSameListItem(startOfCurrentParagraph, startOfNextParagraph)) {
+					endOfCurrentParagraph = endOfParagraph(startOfNextParagraph);
+					startOfNextParagraph = endOfCurrentParagraph.next();
+				}
                 outdentRegion(startOfCurrentParagraph, endOfCurrentParagraph);
             }
             else {
