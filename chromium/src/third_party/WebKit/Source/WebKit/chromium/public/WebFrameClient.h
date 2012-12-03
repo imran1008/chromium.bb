@@ -55,7 +55,7 @@ class WebDataSource;
 class WebDOMEvent;
 class WebFormElement;
 class WebFrame;
-class WebImageElement;
+class WebElement;
 class WebIntent;
 class WebIntentRequest;
 class WebIntentServiceInfo;
@@ -405,8 +405,8 @@ public:
 
     // Image elements registration
 
-    virtual void registerImgElement(WebImageElement*) { }
-    virtual void unregisterImgElement(WebImageElement*) { }
+    virtual void registerImgElement(WebElement*) { }
+    virtual void unregisterImgElement(WebElement*) { }
 
 protected:
     ~WebFrameClient() { }

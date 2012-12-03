@@ -43,7 +43,7 @@
 #include "FrameView.h"
 #include "HTMLAppletElement.h"
 #include "HTMLFormElement.h"  // needed by FormState.h
-#include "HTMLImageElement.h"  // needed by WebImageElement.h
+#include "HTMLImageElement.h"
 #include "HTMLNames.h"
 #include "HTTPParsers.h"
 #include "HistoryItem.h"
@@ -68,7 +68,6 @@
 #include "WebFormElement.h"
 #include "WebFrameClient.h"
 #include "WebFrameImpl.h"
-#include "WebImageElement.h"
 #include "WebIntentRequest.h"
 #include "WebIntentServiceInfo.h"
 #include "WebKit.h"
@@ -1641,16 +1640,16 @@ void FrameLoaderClientImpl::dispatchWillOpenSocketStream(SocketStreamHandle* han
 void FrameLoaderClientImpl::registerImgElement(WebCore::HTMLImageElement* imgElement)
 {
     if (m_webFrame && m_webFrame->client()) {
-        WebImageElement webImageElement(imgElement);
-        m_webFrame->client()->registerImgElement(&webImageElement);
+        WebElement webElement(imgElement);
+        m_webFrame->client()->registerImgElement(&webElement);
     }
 }
 
 void FrameLoaderClientImpl::unregisterImgElement(WebCore::HTMLImageElement* imgElement)
 {
     if (m_webFrame && m_webFrame->client()) {
-        WebImageElement webImageElement(imgElement);
-        m_webFrame->client()->unregisterImgElement(&webImageElement);
+        WebElement webElement(imgElement);
+        m_webFrame->client()->unregisterImgElement(&webElement);
     }
 }
 
