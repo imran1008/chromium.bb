@@ -776,7 +776,10 @@ public:
 #if ENABLE(MUTATION_OBSERVERS)
     bool hasMutationObserversOfType(WebKitMutationObserver::MutationType type) const
     {
+#pragma warning(push)
+#pragma warning(disable:4800)
         return m_mutationObserverTypes & type;
+#pragma warning(pop)
     }
     bool hasMutationObservers() const { return m_mutationObserverTypes; }
     void addMutationObserverTypes(MutationObserverOptions types) { m_mutationObserverTypes |= types; }
