@@ -98,6 +98,7 @@ class HTMLElement;
 class HTMLFrameOwnerElement;
 class HTMLHeadElement;
 class HTMLIFrameElement;
+class HTMLImageElement;
 class HTMLMapElement;
 class HTMLNameCollection;
 class HitTestRequest;
@@ -972,6 +973,9 @@ public:
     void registerForPrivateBrowsingStateChangedCallbacks(Element*);
     void unregisterForPrivateBrowsingStateChangedCallbacks(Element*);
     void privateBrowsingStateDidChange();
+
+    void registerImgElement(HTMLImageElement*);
+    void unregisterImgElement(HTMLImageElement*);
 
     void setShouldCreateRenderers(bool);
     bool shouldCreateRenderers();

@@ -59,6 +59,7 @@ CachedImage::CachedImage(const ResourceRequest& resourceRequest)
     , m_image(0)
     , m_decodedDataDeletionTimer(this, &CachedImage::decodedDataDeletionTimerFired)
     , m_shouldPaintBrokenImage(true)
+    , m_shouldCancelLoadingWithoutClients(false)
 {
     setStatus(Unknown);
 }
@@ -68,6 +69,7 @@ CachedImage::CachedImage(Image* image)
     , m_image(image)
     , m_decodedDataDeletionTimer(this, &CachedImage::decodedDataDeletionTimerFired)
     , m_shouldPaintBrokenImage(true)
+    , m_shouldCancelLoadingWithoutClients(false)
 {
     setStatus(Cached);
     setLoading(false);

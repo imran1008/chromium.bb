@@ -43,6 +43,7 @@
 #include "FrameView.h"
 #include "HTMLAppletElement.h"
 #include "HTMLFormElement.h"  // needed by FormState.h
+#include "HTMLImageElement.h"  // needed by WebImageElement.h
 #include "HTMLNames.h"
 #include "HTTPParsers.h"
 #include "HistoryItem.h"
@@ -67,6 +68,7 @@
 #include "WebFormElement.h"
 #include "WebFrameClient.h"
 #include "WebFrameImpl.h"
+#include "WebImageElement.h"
 #include "WebIntentRequest.h"
 #include "WebIntentServiceInfo.h"
 #include "WebKit.h"
@@ -1634,6 +1636,22 @@ void FrameLoaderClientImpl::dispatchIntent(PassRefPtr<WebCore::IntentRequest> in
 void FrameLoaderClientImpl::dispatchWillOpenSocketStream(SocketStreamHandle* handle)
 {
     m_webFrame->client()->willOpenSocketStream(SocketStreamHandleInternal::toWebSocketStreamHandle(handle));
+}
+
+void FrameLoaderClientImpl::registerImgElement(WebCore::HTMLImageElement* imgElement)
+{
+    if (m_webFrame && m_webFrame->client()) {
+        WebImageElement webImageElement(imgElement);
+        m_webFrame->client()->registerImgElement(&webImageElement);
+    }
+}
+
+void FrameLoaderClientImpl::unregisterImgElement(WebCore::HTMLImageElement* imgElement)
+{
+    if (m_webFrame && m_webFrame->client()) {
+        WebImageElement webImageElement(imgElement);
+        m_webFrame->client()->unregisterImgElement(&webImageElement);
+    }
 }
 
 } // namespace WebKit

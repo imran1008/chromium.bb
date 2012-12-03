@@ -193,6 +193,9 @@
 #include <public/WebFileSystem.h>
 #endif
 
+// TODO: need to go into project file
+#include "WebImageElement.cpp"
+
 using namespace WebCore;
 
 namespace WebKit {
