@@ -43,9 +43,6 @@ TestShellDevToolsClient::~TestShellDevToolsClient() {
   weak_factory_.InvalidateWeakPtrs();
   if (dev_tools_agent_)
     dev_tools_agent_->detach();
-
-  if (all_messages_processed_handler_)
-      delete all_messages_processed_handler_;
 }
 
 void TestShellDevToolsClient::sendMessageToBackend(
