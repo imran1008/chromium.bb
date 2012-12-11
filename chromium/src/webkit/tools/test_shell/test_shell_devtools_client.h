@@ -25,8 +25,7 @@ class TestShellDevToolsAgent;
 class TestShellDevToolsClient: public WebKit::WebDevToolsFrontendClient {
  public:
   TestShellDevToolsClient(TestShellDevToolsAgent* agent,
-                          WebKit::WebView* web_view,
-                          base::Closure* all_messages_processed_handler);
+                          WebKit::WebView* web_view);
   virtual ~TestShellDevToolsClient();
 
   // WebDevToolsFrontendClient implementation
@@ -36,6 +35,8 @@ class TestShellDevToolsClient: public WebKit::WebDevToolsFrontendClient {
   virtual void closeWindow();
   virtual void dockWindow();
   virtual void undockWindow();
+
+  void setAllMessageProcessedHandler(base::Closure *all_messages_processed);
 
   void AsyncCall(const TestShellDevToolsCallArgs& args);
 

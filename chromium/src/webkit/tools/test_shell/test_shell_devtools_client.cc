@@ -25,12 +25,10 @@ using WebKit::WebString;
 using WebKit::WebView;
 
 TestShellDevToolsClient::TestShellDevToolsClient(TestShellDevToolsAgent *agent,
-                                                 WebView* web_view,
-                                                 base::Closure* all_messages_processed_handler)
+                                                 WebView* web_view)
     : ALLOW_THIS_IN_INITIALIZER_LIST(weak_factory_(this)),
       dev_tools_agent_(agent),
-      web_view_(web_view),
-      all_messages_processed_handler_(all_messages_processed_handler) {
+      web_view_(web_view) {
 
   web_tools_frontend_.reset(WebDevToolsFrontend::create(web_view_, this,
       WebString::fromUTF8("en-US")));
@@ -43,6 +41,11 @@ TestShellDevToolsClient::~TestShellDevToolsClient() {
   weak_factory_.InvalidateWeakPtrs();
   if (dev_tools_agent_)
     dev_tools_agent_->detach();
+}
+
+void TestShellDevToolsClient::setAllMessageProcessedHandler(base::Closure *all_messages_processed)
+{
+    all_messages_processed_handler_ = all_messages_processed;
 }
 
 void TestShellDevToolsClient::sendMessageToBackend(
