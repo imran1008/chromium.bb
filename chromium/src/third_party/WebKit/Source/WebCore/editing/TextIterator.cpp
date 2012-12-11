@@ -1314,11 +1314,18 @@ bool SimplifiedBackwardsTextIterator::handleReplacedElement()
     return true;
 }
 
+#define BLOOMBERG_SIMPLIFIED_ITERATOR_FIX
+
 bool SimplifiedBackwardsTextIterator::handleNonTextNode()
 {    
     // We can use a linefeed in place of a tab because this simple iterator is only used to
     // find boundaries, not actual content.  A linefeed breaks words, sentences, and paragraphs.
+#ifdef BLOOMBERG_SIMPLIFIED_ITERATOR_FIX
+    // SimplifiedBackwardsTextIterator should always consider table cells as boundaries.
+    if (shouldEmitNewlineForNode(m_node) || shouldEmitNewlineAfterNode(m_node) || isTableCell(m_node)) {
+#else
     if (shouldEmitNewlineForNode(m_node) || shouldEmitNewlineAfterNode(m_node) || shouldEmitTabBeforeNode(m_node)) {
+#endif
         unsigned index = m_node->nodeIndex();
         // The start of this emitted range is wrong. Ensuring correctness would require
         // VisiblePositions and so would be slow. previousBoundary expects this.
@@ -1329,7 +1336,12 @@ bool SimplifiedBackwardsTextIterator::handleNonTextNode()
 
 void SimplifiedBackwardsTextIterator::exitNode()
 {
+#ifdef BLOOMBERG_SIMPLIFIED_ITERATOR_FIX
+    // SimplifiedBackwardsTextIterator should always consider table cells as boundaries.
+    if (shouldEmitNewlineForNode(m_node) || shouldEmitNewlineBeforeNode(m_node) || isTableCell(m_node)) {
+#else
     if (shouldEmitNewlineForNode(m_node) || shouldEmitNewlineBeforeNode(m_node) || shouldEmitTabBeforeNode(m_node)) {
+#endif
         // The start of this emitted range is wrong. Ensuring correctness would require
         // VisiblePositions and so would be slow. previousBoundary expects this.
         emitCharacter('\n', m_node, 0, 0);
